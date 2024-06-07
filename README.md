@@ -124,7 +124,7 @@ INFO:     Uvicorn running on http://127.0.0.1:6100 (Press CTRL+C to quit)
 访问 http://127.0.0.1:6100/docs 查看文档
 
 ## 配置文件
-提供了基础的数据库，时区，日志路径等配置,本地开发是dev.py 可覆盖配置
+提供了基础的数据库，时区，日志路径等配置,本地开发可以使用 dev.py 覆盖配置
 - src/config/settings.py
 
 ### 日志配置
