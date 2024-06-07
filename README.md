@@ -15,9 +15,9 @@ pip install fastapi-build
 使用 `startproject` 命令创建一个新项目
 
 ```
-fastapi-build startproject myproject
+fbuild startproject myproject
 也可以使用 --example-api 添加demo接口示例
-fastapi-build startproject --example-api myproject
+fbuild startproject --example-api myproject
 ```
 
 ### 创建新应用
@@ -26,7 +26,7 @@ fastapi-build startproject --example-api myproject
 
 ```
 cd myproject
-fastapi-build startapp myapp
+fbuild startapp myapp
 ```
 
 ### 添加插件
@@ -35,7 +35,7 @@ fastapi-build startapp myapp
 
 ```
 当前支持 插件列表 db, db[mysql], db[redis], db[es], celery
-fastapi-build add_plugin plugin_name
+fbuild add_plugin plugin_name
 ```
 
 #### 可用插件
