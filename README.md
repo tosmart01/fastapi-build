@@ -5,15 +5,13 @@
 ## 安装
 必要条件： python>=3.9
 ```
-pip install fastapi-build
+pip install fastapi-build --index-url=https://pypi.org/sample
 ```
 
 ## 快速开始
 
 ### 创建新项目
-
-使用 `startproject` 命令创建一个新项目
-
+`fbuild startproject` 
 ```
 fbuild startproject myproject
 也可以使用 --example-api 添加demo接口示例
@@ -21,8 +19,7 @@ fbuild startproject --example-api myproject
 ```
 
 ### 创建新应用
-
-使用 `startapp` 命令在项目中创建一个新应用
+`fbuild startapp` 
 
 ```
 cd myproject
@@ -31,7 +28,7 @@ fbuild startapp myapp
 
 ### 添加插件
 
-使用 `add_plugin` 命令向项目添加插件
+`fbuild add_plugin `
 
 ```
 当前支持 插件列表 db, db[mysql], db[redis], db[es], celery
