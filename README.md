@@ -3,7 +3,7 @@
 `fastapi-build` 是一个强大的 CLI 工具，用于搭建 FastAPI 项目脚手架。受 Django 管理功能的启发，它允许开发者快速设置 FastAPI 应用程序的基本结构和依赖项。提供视图类，仿Django ORM风格操作，自定义错误处理等集成
 
 ## 安装
-必要条件： python>=3.9
+必要条件： python >=3.9
 ```shell
 $ pip install fastapi-build --index-url=https://pypi.org/sample
 ```
@@ -40,7 +40,7 @@ $ fbuild startproject --example-api myproject
 `fbuild startapp` 
 
 ```shell
-$ cd myproject
+$ cd myproject/src
 $ fbuild startapp myapp
 ```
 
@@ -49,6 +49,7 @@ $ fbuild startapp myapp
 `fbuild add_plugin `
 
 ```shell
+$ cd myproject/src
 # 当前支持 插件列表 db, db[mysql], db[redis], db[es], migrate, all
 $ fbuild add_plugin plugin_name
 ```
@@ -132,8 +133,8 @@ $ fbuild add_plugin plugin_name
 
 ## 运行项目
 ```
-cd src
-python server.py
+$ cd src
+$ python server.py
 INFO:     Started server process [70055]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
