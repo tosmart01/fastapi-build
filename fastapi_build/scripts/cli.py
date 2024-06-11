@@ -25,7 +25,7 @@ class OrderedGroup(click.Group):
 
 
 # 使用自定义的 OrderedGroup
-@click.group(cls=OrderedGroup)
+@click.group(cls=OrderedGroup, context_settings=dict(help_option_names=['-h', '--help'], max_content_width=120))
 def cli():
     pass
 
