@@ -9,7 +9,7 @@ from pathlib import Path
 import pytz
 
 # BASE_DIR
-BASE_DIR = str(Path(__file__).parent.parent)
+BASE_DIR = str(Path(__file__).parent.parent.resolve())
 # 将BASE_DIR 假如搜索路径
 sys.path.insert(0, BASE_DIR)
 # [BASE]
@@ -25,14 +25,11 @@ REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "123456")
 DATABASE_HOST = os.getenv("DATABASE_HOST", "localhost")
 DATABASE_PORT = int(os.getenv("DATABASE_PORT", 3306))
 DATABASE_USER = os.getenv("DATABASE_USER", "root")
-DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD", "123456")
+DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD", "")
 DATABASE_NAME = os.getenv("DATABASE_NAME", 'build')
 DATABASE_CHARSET = os.getenv("DATABASE_CHARSET", "utf8mb4")
 DATABASE_ENGINE = os.getenv("DATABASE_ENGINE", "mysql+pymysql")
 ASYNC_DATABASE_ENGINE = os.getenv("ASYNC_DATABASE_ENGINE", "mysql+aiomysql")
-DB_URL = f"{DATABASE_ENGINE}://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}?charset={DATABASE_CHARSET}",
-ASYNC_DB_URL = f"{ASYNC_DATABASE_ENGINE}://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}?charset={DATABASE_CHARSET}",
-
 ES_HOST = os.getenv("ES_HOST", "http://127.0.0.1:9200")
 ES_USER = os.getenv("ES_USER", "elastic")
 ES_AUTH = int(os.getenv("ES_AUTH", 0))
@@ -49,3 +46,6 @@ try:
         exec(f"from config.{ENV} import *")
 except ModuleNotFoundError as e:
     print(f"custom settings load fail:{e}")
+
+DB_URL = f"{DATABASE_ENGINE}://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}?charset={DATABASE_CHARSET}"
+ASYNC_DB_URL = f"{ASYNC_DATABASE_ENGINE}://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}?charset={DATABASE_CHARSET}"

@@ -28,7 +28,7 @@ clean_pyc_and_cache()
 
 setup(
     name="fastapi_build",
-    version="0.1.6",
+    version="0.2.0",
     packages=find_packages(),
     url="https://github.com/tosmart01/fastapi-build",
     include_package_data=True,
@@ -40,7 +40,7 @@ setup(
         ],
     },
     package_data={
-        "": ["*.md", "*.txt", "docker_build.sh", "Dockerfile", ".gitignores"],  # 包含 README 和其他文件
+        "": ["*.md", "*.txt", "docker_build.sh", "Dockerfile", ".gitignores", "alembic.ini", 'script.py.mako'],  # 包含 README 和其他文件
     },
     classifiers=[
         "Programming Language :: Python :: 3.9",

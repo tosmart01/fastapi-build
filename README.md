@@ -11,6 +11,24 @@ $ pip install fastapi-build --index-url=https://pypi.org/sample
 ## 快速开始
 
 ### 创建新项目
+```shell
+$ fbuild --help
+Usage: fbuild [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  startproject    Create project folder
+  startapp        To create the app, you need to navigate to the...
+  add_plugin      Register a plugin for the application.
+  makemigrations  Run the alembic revision, like Django python manage.py...
+  showmigrations  Run the alembic history, like Django python manage.py...
+  migrate         Run the alembic upgrade head, like Django python...
+
+
+
+```
 `fbuild startproject` 
 ```shell
 $ fbuild startproject myproject
@@ -31,7 +49,7 @@ $ fbuild startapp myapp
 `fbuild add_plugin `
 
 ```shell
-# 当前支持 插件列表 db, db[mysql], db[redis], db[es], celery
+# 当前支持 插件列表 db, db[mysql], db[redis], db[es], migrate, all
 $ fbuild add_plugin plugin_name
 ```
 
@@ -42,6 +60,8 @@ $ fbuild add_plugin plugin_name
 - **db[redis]**: 提供 Redis 数据库支持
 - **db[es]**: 提供 Elasticsearch 支持
 - **celery**: 提供 Celery 任务队列支持
+- **migrate**: 提供alembic 迁移支持，命令仿照Django makemigrations migrate
+- **all**: 安装所有插件
 
 
 ## 项目结构

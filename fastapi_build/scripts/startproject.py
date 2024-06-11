@@ -28,14 +28,14 @@ def create_build_dir(project_name: str, package_dir: Path):
 def main(example_api, project_name: str):
     target_dir = Path.cwd() / project_name / 'src'
     target_dir.mkdir(parents=True, exist_ok=False)
-    package_dir = Path(__file__).parent
+    package_dir = Path(__file__).parent.resolve()
 
     create_build_dir(project_name, package_dir)
     shutil.copy(package_dir / 'example_file/.gitignores', Path.cwd() / project_name / '.gitignore')
     shutil.copy(package_dir / 'example_file/requirements.txt', Path.cwd() / project_name / 'requirements.txt')
     shutil.copy(package_dir / 'example_file/README.md', Path.cwd() / project_name / 'README.md')
 
-    base_dir = Path(__file__).parent.parent
+    base_dir = Path(__file__).parent.parent.resolve()
     for row in base_dir.iterdir():
         if row.name in copy_dirs:
             copy_tree(row, target_dir / row.name)
