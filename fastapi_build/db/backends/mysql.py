@@ -13,11 +13,11 @@ engine = create_engine(
     pool_size=30,
     max_overflow=10,
     pool_timeout=30,
-    echo=True,
+    echo=False,
 )
 async_engine = create_async_engine(
     ASYNC_DB_URL,
-    echo=True,
+    echo=False,
 )
 Session = sessionmaker(bind=engine)
 session = scoped_session(Session)

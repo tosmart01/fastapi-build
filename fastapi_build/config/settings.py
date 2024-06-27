@@ -16,7 +16,7 @@ sys.path.insert(0, BASE_DIR)
 ENV = os.getenv("ENV", 'dev')
 TZ = pytz.timezone(os.getenv("TZ", "Asia/Shanghai"))
 # [REDIS]
-REDIS_HOST = os.getenv("REDIS_HOST", "redis")
+REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
 REDIS_PORT = os.getenv("REDIS_PORT", "6379")
 REDIS_CACHE_DB = os.getenv("REDIS_CACHE_DB", 0)
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "123456")
