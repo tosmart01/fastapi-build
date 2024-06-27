@@ -84,7 +84,7 @@ class BaseView:
         raise ImportError("Not implemented")
 
 
-def path(path: str = '/', view_cls: Type[BaseView] = None, tags: list[str] = None, resource_id: str = "id",
+def path(path: str = '/', view_cls: Type[BaseView] = None, tags: list[str] = None, resource_id: str = "_id",
          query_post_suffix: str = '/list', methods: list[str] = None
          ):
     if inspect.isfunction(view_cls):

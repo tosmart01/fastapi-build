@@ -47,7 +47,13 @@ def register_middleware(app: FastAPI):
     async def validation_exception_handler(request, exc):
         errors = exc.errors()
         model_exc = errors.pop()
-        model: BaseModel = model_exc['model']
+        model: BaseModel = model_exc.get('model')
+        if not model:
+            errors.append(model_exc)
+            return JSONResponse(
+            status_code=500,
+            content={"message": f"{exc}", "code": 500},
+        )
         display_error = ""
         for error in errors:
             for name in error['loc']:

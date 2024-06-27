@@ -6,7 +6,7 @@ from fastapi import Depends, Request
 
 from .request_schema import UserQueryParams, UserCreateModel
 from .response_schema import UserListResponse, UserItemResponse
-# from auth.authenticate import login_required
+from auth.authenticate import login_required
 from core.decorator import api_description
 from core.base_view import BaseView
 from db.models.user import User
@@ -14,10 +14,10 @@ from core.response import Res
 
 
 class DemoView(BaseView):
-    # method_decorators = [login_required, ]
+    method_decorators = [login_required, ]
 
     @api_description(summary="用户详情", response_model=Res(UserItemResponse))
-    def detail(self, request: Request, _id: int):
+    async def detail(self, request: Request, _id: int):
         user = User.objects.get(User.id == _id, raise_not_found=True)
         return self.message(data=user)
 
