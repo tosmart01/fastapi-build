@@ -5,6 +5,7 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, Table
 from sqlalchemy.orm import relationship
 
+from core.context import g
 from db.models.base import BaseModel, Base
 from dao.user_dao import UserDao
 
@@ -17,6 +18,7 @@ class User(BaseModel):
     nickname = Column(String(32), comment='昵称', nullable=False)
     email = Column(String(32), comment='邮箱')
     password = Column(String(60), comment='密码')
+    creator_id = Column(Integer, comment='创建人', nullable=True, default=lambda _: g.user_id)
 
 
 class Parent(BaseModel):

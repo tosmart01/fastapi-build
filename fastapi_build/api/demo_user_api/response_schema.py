@@ -11,6 +11,7 @@ class UserItemResponse(BaseModel):
     username: str
     nickname: str
     email: Optional[str]
+    creator_id: Optional[int]
     class Config:
         orm_mode = True
 

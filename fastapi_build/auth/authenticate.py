@@ -8,6 +8,7 @@ from functools import wraps
 from fastapi import Request
 
 from auth.hashers import verify_password, decode_access_token, create_access_token
+from core.context import g
 from db.models.user import User
 from exceptions.custom_exception import AuthDenyError
 
@@ -21,10 +22,17 @@ async def aget_current_user(user_id) -> User:
     return user
 
 
+def set_value(user: User, request: Request):
+    request.state.user = user
+    g.user_id = user.id
+    g.user = user
+
+
 def login_required(func):
     if inspect.iscoroutinefunction(func):
         @wraps(func)
-        async def wrapped_view(request: Request, *args, **kwargs):
+        async def wrapped_view(*args, **kwargs):
+            request = g.request
             token = request.headers.get('Authorization')
             if not token:
                 raise AuthDenyError()
@@ -35,12 +43,13 @@ def login_required(func):
                 raise AuthDenyError()
             else:
                 user = await aget_current_user(user_info['user_id'])
-                request.state.user = user
-                res = await func(request, *args, **kwargs)
+                set_value(user, request)
+                res = await func(*args, **kwargs)
                 return res
     else:
         @wraps(func)
-        def wrapped_view(request: Request, *args, **kwargs):
+        def wrapped_view(*args, **kwargs):
+            request = g.request
             token = request.headers.get('Authorization')
             if not token:
                 raise AuthDenyError()
@@ -51,8 +60,8 @@ def login_required(func):
                 raise AuthDenyError()
             else:
                 user = get_current_user(user_info['user_id'])
-                request.state.user = user
-                return func(request, *args, **kwargs)
+                set_value(user, request)
+                return func(*args, **kwargs)
     return wrapped_view
 
 

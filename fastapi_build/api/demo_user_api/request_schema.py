@@ -27,3 +27,15 @@ class UserCreateModel(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class UserLoginModel(BaseModel):
+    username: str
+    password: str
+
+
+class UserLoginResponseModel(BaseModel):
+    user_id: int = Field(alias='id')
+    username: str
+    email: str
+    token: str

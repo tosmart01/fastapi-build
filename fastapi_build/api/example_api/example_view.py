@@ -16,12 +16,12 @@ from .request_schema import ExampleRequestModel
 class ExampleView(BaseView):
 
     @api_description(summary='example view get query', response_model=Res(ExampleResponseModel))
-    def get(self, request: Request, name: Annotated[str, Query(description='名称', min_length=1)]):
+    def get(self, name: Annotated[str, Query(description='名称', min_length=1)]):
         return self.message(data={"name": name, "creator_id": 1})
 
     @api_description(summary='example view detail query', response_model=Res(ExampleResponseModel))
-    async def detail(self, request: Request, _id: int):
+    async def detail(self, _id: int):
         return self.message(data={"name": 'hello', "creator_id": _id})
 
-    async def post(self, request: Request, data: ExampleRequestModel) -> Res(ExampleResponseModel):
+    async def post(self, data: ExampleRequestModel) -> Res(ExampleResponseModel):
         return self.message(data={"name": data.name, "creator_id": data.creator_id})

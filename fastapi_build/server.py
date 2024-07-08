@@ -13,11 +13,12 @@ def create_app() -> FastAPI:
     app = FastAPI()
     import_api_module('api')
     import_api_module('db.models')
-    # from db.models.base import create_tables
-    # create_tables()
+    from db.models.base import create_tables
+    create_tables()
     app.include_router(base_router, prefix='/api', )
     register_middleware(app)
     from common import patch
+
     return app
 
 

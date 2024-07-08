@@ -11,24 +11,7 @@ $ pip install fastapi-build --index-url=https://pypi.org/sample
 ## 快速开始
 
 ### 创建新项目
-```shell
-$ fbuild --help
-Usage: fbuild [OPTIONS] COMMAND [ARGS]...
 
-Options:
-  --help  Show this message and exit.
-
-Commands:
-  startproject    Create project folder
-  startapp        To create the app, you need to navigate to the...
-  add_plugin      Register a plugin for the application.
-  makemigrations  Run the alembic revision, like Django python manage.py makemigrations
-  showmigrations  Run the alembic history, like Django python manage.py showmigrations
-  migrate         Run the alembic upgrade head, like Django python migrate
-
-
-
-```
 `fbuild startproject` 
 ```shell
 $ fbuild startproject myproject
@@ -64,6 +47,24 @@ $ fbuild add_plugin plugin_name
 - **migrate**: 提供alembic 迁移支持，命令仿照Django makemigrations migrate
 - **all**: 安装所有插件
 
+#### 其他命令行
+```shell
+$ fbuild --help
+Usage: fbuild [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  startproject    Create project folder
+  startapp        To create the app, you need to navigate to the...
+  add_plugin      Register a plugin for the application.
+  makemigrations  Run the alembic revision, like Django python manage.py makemigrations
+  showmigrations  Run the alembic history, like Django python manage.py showmigrations
+  migrate         Run the alembic upgrade head, like Django python migrate
+
+
+```
 
 ## 项目结构
 
@@ -169,7 +170,7 @@ urlpatterns = [
 
 3. 编写视图类
 api/example_api/view.py
-目前支持在 视图类中复写以下函数, 所有视图函数默认第一个参数为request对象
+目前支持在 视图类中复写以下函数
  - get, get请求，get查询,不带路径id
  - detail, get请求,根据路径id查询 
  - post, post请求，表单提交
@@ -179,29 +180,31 @@ api/example_api/view.py
  - delete, delete请求, 根据路径id的删除请求
  - multi_delete, delete请求，带请求体的批量删除
 ```python
-from typing import Annotated
+from fastapi import Depends
 
-from fastapi import Request, Query
-
-from core.base_view import BaseView
+from .request_schema import UserQueryParams, UserCreateModel, UserLoginModel, UserLoginResponseModel
+from .response_schema import UserListResponse, UserItemResponse
+from auth.authenticate import login_required
 from core.decorator import api_description
+from core.base_view import BaseView
+from db.models.user import User
 from core.response import Res
-from .response_schema import ExampleResponseModel
-from .request_schema import ExampleRequestModel
 
 
-class ExampleView(BaseView):
+class DemoView(BaseView):
+    method_decorators = [login_required, ]
 
-    @api_description(summary='example view get query', response_model=Res(ExampleResponseModel))
-    def get(self, request: Request, name: Annotated[str, Query(description='名称', min_length=1)]):
-        return self.message(data={"name": name, "creator_id": 1})
-    
-    @api_description(summary='example view detail query', response_model=Res(ExampleResponseModel))
-    async def detail(self, request: Request, _id: int):
-        return self.message(data={"name": 'hello', "creator_id": _id})
+    @api_description(summary="用户详情", response_model=Res(UserItemResponse))
+    async def detail(self, _id: int):
+        user = User.objects.get(User.id == _id, raise_not_found=True)
+        return self.message(data=user)
 
-    async def post(self, request: Request, data: ExampleRequestModel) -> Res(ExampleResponseModel):
-        return self.message(data={"name": data.name, "creator_id": data.creator_id}
+    @api_description(summary="用户查询", response_model=Res(UserListResponse))
+    async def get(self, query: UserQueryParams = Depends(UserQueryParams)):
+        self.request # request对象直接通过self获取
+        self.user # 直接获取user对象
+        total, users = await User.objects.search(query)
+        return self.message(data={'total': total, 'results': users}
 ```
 
 4. 启动项目

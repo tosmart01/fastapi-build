@@ -29,7 +29,7 @@ def verify_password(plain_password: str, hashed_password: str):
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_access_token(data: TokenData, expires_delta: int = TOKEN_EXPIRE_SECONDS) -> str:
+def create_access_token(data: Union[TokenData, dict], expires_delta: int = TOKEN_EXPIRE_SECONDS) -> str:
     create_time = time.time()
     data['create_time'] = create_time
     data['expires_delta'] = expires_delta

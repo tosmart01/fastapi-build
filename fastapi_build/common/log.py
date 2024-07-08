@@ -71,6 +71,7 @@ def register_logger():
         diagnose=False,
         encoding="utf-8",
         format="{time} {level} {message} | PID:{process} | TID: {thread}",
+        catch=False,
     )
     logger.add(
         os.path.join(LOG_DIR, prefix, "error_{time:%Y-%m-%d}.log"),
@@ -82,18 +83,19 @@ def register_logger():
         diagnose=False,
         encoding="utf-8",
         format="{time} {level} {message} | PID:{process} | TID: {thread}",
+        catch=False,
     )
-    logger.add(
-        os.path.join(LOG_DIR, prefix, "error_detail_{time:%Y-%m-%d}.log"),
-        level="ERROR",
-        colorize=False,
-        rotation="1 days",
-        retention="3 days",
-        backtrace=True,
-        diagnose=True,
-        encoding="utf-8",
-        format="{time} {level} {message} | PID:{process} | TID: {thread}",
-    )
+    # logger.add(
+    #     os.path.join(LOG_DIR, prefix, "error_detail_{time:%Y-%m-%d}.log"),
+    #     level="ERROR",
+    #     colorize=False,
+    #     rotation="1 days",
+    #     retention="3 days",
+    #     backtrace=True,
+    #     diagnose=True,
+    #     encoding="utf-8",
+    #     format="{time} {level} {message} | PID:{process} | TID: {thread}",
+    # )
 
 
 register_logger()

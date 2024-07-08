@@ -5,15 +5,16 @@
 import time
 
 from fastapi import Request, FastAPI
-from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from core.context import g
 from common.log import logger
-
 from exceptions.base import ApiError
 from exceptions.http_status import HTTP_400_BAD_REQUEST
+from middleware.startup import startup
 
 
 def register_middleware(app: FastAPI):
@@ -51,9 +52,33 @@ def register_middleware(app: FastAPI):
         if not model:
             errors.append(model_exc)
             return JSONResponse(
-            status_code=500,
-            content={"message": f"{exc}", "code": 500},
+                status_code=500,
+                content={"message": f"{exc}", "code": 500},
+            )
+        display_error = ""
+        for error in errors:
+            for name in error['loc']:
+                field = model.model_fields.get(name)
+                if field is not None:
+                    display_field_name = name  # if not field.description else field.description
+                    display_error += f"{display_field_name} {error['msg']}"
+                    break
+        return JSONResponse(
+            status_code=HTTP_400_BAD_REQUEST,
+            content={"message": f"{display_error}", "code": HTTP_400_BAD_REQUEST},
         )
+
+    @app.exception_handler(ResponseValidationError)
+    async def response_exception_handler(request, exc):
+        errors = exc.errors()
+        model_exc = errors.pop()
+        model: BaseModel = model_exc.get('model')
+        if not model:
+            errors.append(model_exc)
+            return JSONResponse(
+                status_code=500,
+                content={"message": f"{exc}", "code": 500},
+            )
         display_error = ""
         for error in errors:
             for name in error['loc']:
@@ -79,7 +104,7 @@ def register_middleware(app: FastAPI):
         client_agent = request.headers.get("user-agent")
         query_params = dict(request.query_params)
         request_body = await request.body()
-
+        g.request = request
         # 处理请求
         try:
             response = await call_next(request)
@@ -100,3 +125,5 @@ def register_middleware(app: FastAPI):
         except Exception:
             logger.exception("日志记录异常")
         return response
+
+    app.on_event("startup")(startup)

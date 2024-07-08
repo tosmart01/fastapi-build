@@ -40,6 +40,7 @@ LOG_DIR = os.getenv("LOG_DIR", "log")
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 TOKEN_EXPIRE_SECONDS = int(os.getenv("TOKEN_EXPIRE_SECONDS", 3600 * 24 * 7))
 USE_GUNICORN_WORKER = int(os.getenv("USE_GUNICORN_WORKER", 0))
+SYNC_THREAD_COUNT = int(os.getenv("SYNC_THREAD_COUNT", 800))
 # 根据开发环境导入不同配置文件
 try:
     if ENV.lower() != "prod":

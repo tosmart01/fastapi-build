@@ -7,6 +7,8 @@ from typing import Union, Type
 
 from fastapi import APIRouter, Request
 
+from core.context import g
+
 base_router = APIRouter()
 
 
@@ -20,6 +22,18 @@ class BaseView:
         self.resource_id = resource_id
         self.query_post_suffix = query_post_suffix
         self.register_routes()
+
+    @property
+    def request(self):
+        return g.request
+
+    @property
+    def user(self):
+        return g.user
+
+    @property
+    def user_id(self):
+        return g.user.id
 
     def register_routes(self):
         resource_id = "/{" + self.resource_id + "}"
@@ -59,28 +73,28 @@ class BaseView:
             "data": data
         }
 
-    def get(self, *args: tuple[Request, ...], **kwargs):
+    def get(self, *args, **kwargs):
         raise ImportError("Not implemented")
 
-    def detail(self, *args: tuple[Request, ...], **kwargs):
+    def detail(self, *args, **kwargs):
         raise ImportError("Not implemented")
 
-    def post(self, *args: tuple[Request, ...], **kwargs):
+    def post(self, *args, **kwargs):
         raise ImportError("Not implemented")
 
-    def query_post(self, *args: tuple[Request, ...], **kwargs):
+    def query_post(self, *args, **kwargs):
         raise ImportError("Not implemented")
 
-    def put(self, *args: tuple[Request, ...], **kwargs):
+    def put(self, *args, **kwargs):
         raise ImportError("Not implemented")
 
-    def multi_put(self, *args: tuple[Request, ...], **kwargs):
+    def multi_put(self, *args, **kwargs):
         raise ImportError("Not implemented")
 
-    def delete(self, *args: tuple[Request, ...], **kwargs):
+    def delete(self, *args, **kwargs):
         raise ImportError("Not implemented")
 
-    def multi_delete(self, *args: tuple[Request, ...], **kwargs):
+    def multi_delete(self, *args, **kwargs):
         raise ImportError("Not implemented")
 
 
