@@ -12,7 +12,7 @@ from dao.user_dao import UserDao
 
 class User(BaseModel):
     __tablename__ = 'user'
-    objects = UserDao()
+    objects = UserDao
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(32), comment='username', nullable=True, index=True, unique=True)
     nickname = Column(String(32), comment='昵称', nullable=False)

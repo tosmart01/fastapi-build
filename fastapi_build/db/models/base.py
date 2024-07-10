@@ -14,11 +14,13 @@ class CustomDeclarativeMeta(DeclarativeMeta):
 
     def __init__(self, *args, **kwargs):
         super(CustomDeclarativeMeta, self).__init__(*args, **kwargs)
-        if hasattr(self, 'objects'):
-            self.objects.model_cls = self
-            self.objects.base_filter = (self.objects.model_cls.is_delete == 0,)
-            self.objects.session = session
-            self.objects.async_session = async_session
+        if self.__name__ != 'BaseModel':
+            if hasattr(self, 'objects'):
+                self.objects = self.objects()
+                self.objects.model_cls = self
+                self.objects.base_filter = (self.objects.model_cls.is_delete == 0,)
+                self.objects.session = session
+                self.objects.async_session = async_session
 
 
 Base = declarative_base(metaclass=CustomDeclarativeMeta)
@@ -28,7 +30,7 @@ class BaseModel(Base):
     """基类表模板"""
 
     __abstract__ = True
-    objects = BaseDao()
+    objects = BaseDao
     is_delete = Column(Boolean, nullable=False, default=False, comment="是否已删除")
 
     def to_dict(self, keys=None):

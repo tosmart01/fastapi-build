@@ -9,7 +9,7 @@ from sqlalchemy import desc, asc, select, func, update, delete, Row
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio.session import AsyncSession, async_sessionmaker
 
-from .sql_tools import query_to_dict_list, query_first_to_dict, query_to_value_list
+from .sql_tools import database
 from exceptions.custom_exception import NotFoundError, MultipleReturnedError
 
 T = TypeVar("T", bound="Base")
@@ -42,7 +42,7 @@ class BaseDao:
             query_field: Optional[Union[List, tuple]] = None,
             to_dict: bool = False,
             raise_not_found: bool = False
-    ) -> Union[model_cls, None]:
+    ) -> Union[model_cls, dict]:
         """
         Get a single record by specified filter criteria.
 
@@ -58,12 +58,10 @@ class BaseDao:
             raise NotFoundError()
         if query.count() > 1:
             raise MultipleReturnedError()
-        if query and to_dict:
-            return (
-                query_first_to_dict(query.first()) if query_field
-                else query_first_to_dict(query.first(), query_type='model')
-            )
-        return query.first()
+        first = query.first()
+        if first and to_dict:
+            return database.query_obj_to_dict(first)
+        return first
 
     def get_by_id(
             self,
@@ -72,7 +70,7 @@ class BaseDao:
             to_dict: bool = False,
             id_field: str = None,
             raise_not_found: bool = False
-    ) -> Union[model_cls, None]:
+    ) -> Union[model_cls, dict]:
         """
         Get a single record by its ID.
 
@@ -92,11 +90,7 @@ class BaseDao:
             raise NotFoundError()
 
         if to_dict and obj:
-            if query_field:
-                return query_first_to_dict(obj)
-            else:
-                return query_first_to_dict(obj, query_type='model')
-
+            return database.query_obj_to_dict(obj)
         return obj
 
     def get_by_ids(
@@ -105,7 +99,7 @@ class BaseDao:
             query_field: Optional[Union[List, tuple]] = None,
             to_dict: bool = False,
             order_by: Optional[Union[str, List[str], tuple]] = None,
-            values_list: bool = False,
+            value_list: bool = False,
             id_field: str = None,
     ) -> List[Union[model_cls, dict, list]]:
         """
@@ -115,7 +109,7 @@ class BaseDao:
         :param query_field: Fields to be selected in the query
         :param to_dict: Whether to return the result as a dictionary
         :param order_by: Order by conditions
-        :param values_list: Whether to return the result as a list of values
+        :param value_list: Whether to return the result as a list of values
         :param id_field: Field name of the ID column
         :return: List of records or an empty list
         """
@@ -127,16 +121,10 @@ class BaseDao:
         queryset = self.order_by(order=order_by, queryset=queryset)
 
         if to_dict:
-            return (
-                query_to_dict_list(queryset)
-                if query_field
-                else query_to_dict_list(queryset, query_type='model')
-            )
+            return database.query_to_dict_list(queryset)
 
-        if values_list:
-            return (
-                query_to_value_list(queryset) if query_field else query_to_value_list(queryset, query_type='model')
-            )
+        if value_list:
+            return database.query_to_value_list(queryset)
 
         return queryset.all()
 
@@ -162,10 +150,8 @@ class BaseDao:
         query = self.get_query(query_field)
         queryset = query.filter(id_col == model_id)
         if to_dict:
-            if query_field:
-                return query_to_dict_list(queryset)
-            else:
-                return query_to_dict_list(queryset, query_type='model')
+            return database.query_to_dict_list(queryset)
+
         return queryset.all()
 
     def get_by_fields(
@@ -194,11 +180,7 @@ class BaseDao:
         queryset = self.order_by(order=order_by, queryset=queryset)
 
         if to_dict:
-            return (
-                query_to_dict_list(queryset)
-                if query_field
-                else query_to_dict_list(queryset, query_type='model')
-            )
+            return database.query_to_dict_list(queryset)
         return queryset.all()
 
     def get_all(
@@ -217,11 +199,7 @@ class BaseDao:
         """
         queryset = self.get_query(query_field)
         if to_dict:
-            return (
-                query_to_dict_list(queryset)
-                if query_field
-                else query_to_dict_list(queryset, query_type='model')
-            )
+            return database.query_to_dict_list(queryset)
 
         queryset = self.order_by(order=order_by, queryset=queryset)
         return queryset.all()
@@ -558,7 +536,7 @@ class BaseDao:
             query_field: Optional[Union[List, tuple]] = None,
             to_dict: bool = False,
             raise_not_found: bool = False
-    ) -> Union[model_cls, None]:
+    ) -> Union[model_cls, dict]:
         """
         Async get a single record by specified filter criteria.
 
@@ -578,18 +556,9 @@ class BaseDao:
             if query_field:
                 query = select(*query_field)
             query = query.filter(*args)
-            result = await session.execute(query)
-            if query_field:
-                row = result.first()
-            else:
-                row = result.first()[0]
+            row = await database.a_fetchone(query, to_dict=to_dict, _session=session)
             if not row and raise_not_found:
                 raise NotFoundError()
-            if row and to_dict:
-                return (
-                    query_first_to_dict(row) if query_field
-                    else query_first_to_dict(row, query_type='model')
-                )
             return row
 
     async def aget_by_id(
@@ -599,7 +568,7 @@ class BaseDao:
             to_dict: bool = False,
             id_field: str = None,
             raise_not_found: bool = False
-    ) -> Union[model_cls, None]:
+    ) -> Union[model_cls, dict]:
         """
         Async get a single record by its ID.
 
@@ -614,19 +583,10 @@ class BaseDao:
             id_col = getattr(self.model_cls, id_field or "id", None)
             query = self.aget_query(query_field)
             query = query.filter(id_col == model_id)
-            result = await session.execute(query)
-            if query_field:
-                obj = result.first()
-            else:
-                obj = result.first()[0]
-            if not obj and raise_not_found:
+            row = await database.a_fetchone(query, to_dict=to_dict, _session=session)
+            if not row and raise_not_found:
                 raise NotFoundError()
-            if to_dict and obj:
-                if query_field:
-                    return query_first_to_dict(obj)
-                else:
-                    return query_first_to_dict(obj, query_type='model')
-            return obj
+            return row
 
     async def aget_by_ids(
             self,
@@ -634,7 +594,7 @@ class BaseDao:
             query_field: Optional[Union[List, tuple]] = None,
             to_dict: bool = False,
             order_by: Optional[Union[str, List[str], tuple]] = None,
-            values_list: bool = False,
+            value_list: bool = False,
             id_field: str = None,
     ) -> List[Union[model_cls, dict, list]]:
         """
@@ -644,7 +604,7 @@ class BaseDao:
         :param query_field: Fields to be selected in the query
         :param to_dict: Whether to return the result as a dictionary
         :param order_by: Order by conditions
-        :param values_list: Whether to return the result as a list of values
+        :param value_list: Whether to return the result as a list of values
         :param id_field: Field name of the ID column
         :return: List of records or an empty list
         """
@@ -655,18 +615,7 @@ class BaseDao:
             query = self.aget_query(query_field)
             query = query.filter(id_col.in_(model_ids))
             queryset = self.order_by(order=order_by, queryset=query)
-            result = await session.execute(queryset)
-            rows = result.all() if query_field else [i[0] for i in result.all()]
-            if to_dict:
-                return (
-                    query_to_dict_list(rows)
-                    if query_field
-                    else query_to_dict_list(rows, query_type='model')
-                )
-            if values_list:
-                return (
-                    query_to_value_list(rows) if query_field else query_to_value_list(rows, query_type='model')
-                )
+            rows = await database.a_fetchall(queryset, to_dict=to_dict, value_list=value_list, _session=session)
             return rows
 
     async def a_create(

@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from api.demo_user_api.request_schema import UserQueryParams
 from auth.hashers import make_password
 from exceptions.base import ApiError
-from .sql_tools import a_pagination
+from .sql_tools import database
 from .base import BaseDao
 
 if TYPE_CHECKING:
@@ -52,7 +52,7 @@ class UserDao(BaseDao):
                 query = query.where(self.model_cls.username == params.username)
             if params.email:
                 query = query.where(self.model_cls.email == params.email)
-            total, result = await a_pagination(session, query=query, per_page=params.paginate_params.per_page,
-                                               page=params.paginate_params.page, query_type='model'
-                                               )
+            total, result = await database.a_pagination(query=query, per_page=params.paginate_params.per_page,
+                                                        page=params.paginate_params.page, _session=session
+                                                        )
             return total, result

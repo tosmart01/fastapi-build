@@ -2,8 +2,8 @@
 # @Time : 2024/5/24 14:42
 # @Author : PinBar
 # @File : demo.py
-from anyio.lowlevel import RunVar
 from fastapi import Depends
+from sqlalchemy import select
 
 from auth.hashers import verify_password, create_access_token
 from .request_schema import UserQueryParams, UserCreateModel, UserLoginModel, UserLoginResponseModel
@@ -11,22 +11,24 @@ from .response_schema import UserListResponse, UserItemResponse
 from auth.authenticate import login_required
 from core.decorator import api_description
 from core.base_view import BaseView
-from db.models.user import User
+from db.models.user import User, Parent
 from core.response import Res
 from exceptions.custom_exception import PasswordError
+from dao.sql_tools import database
 
 
 class DemoView(BaseView):
-    method_decorators = [login_required, ]
+    # method_decorators = [login_required, ]
 
     @api_description(summary="用户详情", response_model=Res(UserItemResponse))
     async def detail(self, _id: int):
-        user = User.objects.get(User.id == _id, raise_not_found=True)
+        user = User.objects.aget(User.id == _id, raise_not_found=True, to_dict=True)
         return self.message(data=user)
 
     @api_description(summary="用户查询", response_model=Res(UserListResponse))
     async def get(self, query: UserQueryParams = Depends(UserQueryParams)):
         total, users = await User.objects.search(query)
+        await Parent.objects.a_create(name='1111')
         return self.message(data={'total': total, 'results': users})
 
     @api_description(summary="用户创建", response_model=Res(UserItemResponse))
