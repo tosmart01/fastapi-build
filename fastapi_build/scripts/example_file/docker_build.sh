@@ -13,4 +13,4 @@ docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:${TAG}
 docker push ${IMAGE_NAME}:${TAG}
 
 echo "docker pull ${IMAGE_NAME}:${TAG}"
-docker push ${IMAGE_NAME}:${TAG
+docker push ${IMAGE_NAME}:${TAG}

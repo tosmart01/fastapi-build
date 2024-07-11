@@ -6,7 +6,7 @@ from typing import Union
 
 from sqlalchemy import select, Result, Any, Row, func, text, Select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import DeclarativeMeta, Query
+from sqlalchemy.orm import Query
 
 from db.backends.mysql import session, async_session
 

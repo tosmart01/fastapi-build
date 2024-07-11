@@ -3,7 +3,6 @@
 # @Author : PinBar
 # @File : demo.py
 from fastapi import Depends
-from sqlalchemy import select
 
 from auth.hashers import verify_password, create_access_token
 from .request_schema import UserQueryParams, UserCreateModel, UserLoginModel, UserLoginResponseModel
@@ -14,7 +13,6 @@ from core.base_view import BaseView
 from db.models.user import User, Parent
 from core.response import Res
 from exceptions.custom_exception import PasswordError
-from dao.sql_tools import database
 
 
 class DemoView(BaseView):

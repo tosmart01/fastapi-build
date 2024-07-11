@@ -4,7 +4,7 @@
 # @File : example.py
 from typing import Annotated
 
-from fastapi import Request, Query
+from fastapi import Query
 
 from core.base_view import BaseView
 from core.decorator import api_description
