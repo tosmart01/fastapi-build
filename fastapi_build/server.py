@@ -6,7 +6,7 @@ from fastapi import FastAPI
 
 from core.base_view import base_router
 from common.load_model import import_api_module
-from middleware.register import register_middleware
+from middleware.middle import register_middleware
 
 
 def create_app() -> FastAPI:

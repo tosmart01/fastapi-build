@@ -3,7 +3,6 @@
 # @Author : PinBar
 # @File : auth.py
 import inspect
-from functools import wraps
 
 from fastapi import Request
 
@@ -28,40 +27,30 @@ def set_value(user: User, request: Request):
     g.user = user
 
 
+def check_token(request: Request):
+    token = request.headers.get('Authorization')
+    if not token:
+        raise AuthDenyError()
+    token = token.split('Bearer ')[1].strip()
+    try:
+        user_info = decode_access_token(token)
+    except Exception:
+        raise AuthDenyError()
+    return user_info
+
+
 def login_required(func):
     if inspect.iscoroutinefunction(func):
-        @wraps(func)
-        async def wrapped_view(*args, **kwargs):
-            request = g.request
-            token = request.headers.get('Authorization')
-            if not token:
-                raise AuthDenyError()
-            token = token.split('Bearer ')[1].strip()
-            try:
-                user_info = decode_access_token(token)
-            except Exception:
-                raise AuthDenyError()
-            else:
-                user = await aget_current_user(user_info['user_id'])
-                set_value(user, request)
-                res = await func(*args, **kwargs)
-                return res
+        async def wrapped_view(request: Request):
+            user_info = check_token(request)
+            user = await aget_current_user(user_info['user_id'])
+            set_value(user, request)
     else:
-        @wraps(func)
-        def wrapped_view(*args, **kwargs):
-            request = g.request
-            token = request.headers.get('Authorization')
-            if not token:
-                raise AuthDenyError()
-            token = token.split('Bearer ')[1].strip()
-            try:
-                user_info = decode_access_token(token)
-            except Exception:
-                raise AuthDenyError()
-            else:
-                user = get_current_user(user_info['user_id'])
-                set_value(user, request)
-                return func(*args, **kwargs)
+        def wrapped_view(request: Request):
+            user_info = check_token(request)
+            user = get_current_user(user_info['user_id'])
+            set_value(user, request)
+
     return wrapped_view
 
 

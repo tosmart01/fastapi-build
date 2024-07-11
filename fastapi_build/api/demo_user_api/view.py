@@ -16,17 +16,16 @@ from exceptions.custom_exception import PasswordError
 
 
 class DemoView(BaseView):
-    # method_decorators = [login_required, ]
+    authentication_methods = [login_required]
 
     @api_description(summary="用户详情", response_model=Res(UserItemResponse))
-    async def detail(self, _id: int):
-        user = User.objects.aget(User.id == _id, raise_not_found=True, to_dict=True)
+    def detail(self, _id: int):
+        user = User.objects.get(User.id == _id, raise_not_found=True, to_dict=True)
         return self.message(data=user)
 
     @api_description(summary="用户查询", response_model=Res(UserListResponse))
     async def get(self, query: UserQueryParams = Depends(UserQueryParams)):
         total, users = await User.objects.search(query)
-        await Parent.objects.a_create(name='1111')
         return self.message(data={'total': total, 'results': users})
 
     @api_description(summary="用户创建", response_model=Res(UserItemResponse))
@@ -53,8 +52,8 @@ class DemoView(BaseView):
 
 class LoginView(BaseView):
     @api_description(summary="登录")
-    def post(self, body: UserLoginModel) -> Res(UserLoginResponseModel):
-        user: User = User.objects.get(User.username == body.username, raise_not_found=True)
+    async def post(self, body: UserLoginModel) -> Res(UserLoginResponseModel):
+        user: User = await User.objects.aget(User.username == body.username, raise_not_found=True)
         if verify_password(body.password, user.password):
             token = create_access_token({"user_id": user.id, "username": user.username})
             return self.message(data={**user.to_dict(), "token": token})

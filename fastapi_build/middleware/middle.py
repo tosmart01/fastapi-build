@@ -1,7 +1,7 @@
 # -- coding: utf-8 --
 # @Time : 2024/5/16 11:13
 # @Author : PinBar
-# @File : register.py
+# @File : middle.py
 import time
 
 from fastapi import Request, FastAPI
@@ -9,11 +9,12 @@ from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from core.context import g
 from common.log import logger
 from exceptions.base import ApiError
-from exceptions.http_status import HTTP_400_BAD_REQUEST
+from exceptions.http_status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 from middleware.startup import startup
 
 
@@ -30,6 +31,33 @@ def register_middleware(app: FastAPI):
         allow_headers=["*"],
     )
 
+    def to_errors(exc):
+        errors = exc.errors()
+        model_exc = errors.pop()
+        model: BaseModel = model_exc.get('model')
+        if not model:
+            errors.append(model_exc)
+            return JSONResponse(
+                status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"message": f"{exc}", "code": 500},
+            )
+        display_error = ""
+        for error in errors:
+            for name in error['loc']:
+                field = model.model_fields.get(name)
+                if field is not None:
+                    display_field_name = name  # if not field.description else field.description
+                    display_error += f"{display_field_name} {error['msg']}"
+                    return JSONResponse(
+                        status_code=HTTP_400_BAD_REQUEST,
+                        content={"message": f"{display_error}", "code": HTTP_400_BAD_REQUEST},
+                    )
+
+        return JSONResponse(
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": f"{exc}", "code": 500},
+        )
+
     @app.exception_handler(ApiError)
     async def custom_exception_handler(request: Request, exc: ApiError):
         return JSONResponse(
@@ -40,57 +68,17 @@ def register_middleware(app: FastAPI):
     @app.exception_handler(Exception)
     async def exception_handler(request: Request, exc):
         return JSONResponse(
-            status_code=500,
-            content={"message": f"{exc}", "code": 500},
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": f"{exc}", "code": HTTP_500_INTERNAL_SERVER_ERROR},
         )
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request, exc):
-        errors = exc.errors()
-        model_exc = errors.pop()
-        model: BaseModel = model_exc.get('model')
-        if not model:
-            errors.append(model_exc)
-            return JSONResponse(
-                status_code=500,
-                content={"message": f"{exc}", "code": 500},
-            )
-        display_error = ""
-        for error in errors:
-            for name in error['loc']:
-                field = model.model_fields.get(name)
-                if field is not None:
-                    display_field_name = name  # if not field.description else field.description
-                    display_error += f"{display_field_name} {error['msg']}"
-                    break
-        return JSONResponse(
-            status_code=HTTP_400_BAD_REQUEST,
-            content={"message": f"{display_error}", "code": HTTP_400_BAD_REQUEST},
-        )
+        return to_errors(exc)
 
     @app.exception_handler(ResponseValidationError)
     async def response_exception_handler(request, exc):
-        errors = exc.errors()
-        model_exc = errors.pop()
-        model: BaseModel = model_exc.get('model')
-        if not model:
-            errors.append(model_exc)
-            return JSONResponse(
-                status_code=500,
-                content={"message": f"{exc}", "code": 500},
-            )
-        display_error = ""
-        for error in errors:
-            for name in error['loc']:
-                field = model.model_fields.get(name)
-                if field is not None:
-                    display_field_name = name  # if not field.description else field.description
-                    display_error += f"{display_field_name} {error['msg']}"
-                    break
-        return JSONResponse(
-            status_code=HTTP_400_BAD_REQUEST,
-            content={"message": f"{display_error}", "code": HTTP_400_BAD_REQUEST},
-        )
+        return to_errors(exc)
 
     @app.middleware("http")
     async def common_requests(request: Request, call_next):
@@ -127,3 +115,4 @@ def register_middleware(app: FastAPI):
         return response
 
     app.on_event("startup")(startup)
+

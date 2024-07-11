@@ -3,9 +3,10 @@
 # @Author : PinBar
 # @File : base_view.py
 import inspect
+from functools import partial
 from typing import Union, Type
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends
 
 from core.context import g
 
@@ -13,7 +14,8 @@ base_router = APIRouter()
 
 
 class BaseView:
-    method_decorators = []
+    authentication_methods = []
+    permissions_methods = []
 
     def __init__(self, path: str = None, tags: list[str] = None, resource_id: str = '_id',
                  query_post_suffix: str = '/list'):
@@ -49,12 +51,12 @@ class BaseView:
         }
         for method_name, router_info in method_map.items():
             method = getattr(self, method_name, None)
-            for decorator in self.method_decorators:
-                method = decorator(method)
+            dependencies = self.authentication_methods + self.permissions_methods
             if self.is_method_overridden(method_name):
                 extra_params = getattr(method, '_extra_params', {})
                 base_router.add_api_route(router_info['path'], method,
                                           methods=router_info['methods'],
+                                          dependencies=[Depends(i(method)) for i in dependencies],
                                           tags=self.tags, **extra_params)
 
     def is_method_overridden(self, method_name: str) -> bool:
