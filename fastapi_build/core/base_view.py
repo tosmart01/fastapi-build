@@ -37,6 +37,17 @@ class BaseView:
     def user_id(self):
         return g.user.id
 
+    def get_dependencies(self, extra_params: dict, method):
+        custom_permission_classes = extra_params.pop('permission_classes', None)
+        custom_authentication_classes = extra_params.pop('authentication_classes', None)
+        authentication_classes = (custom_authentication_classes if custom_authentication_classes is not None
+                                  else self.authentication_classes)
+        permission_classes = (custom_permission_classes if custom_permission_classes is not None else
+                              self.permissions_classes)
+        dependencies = [Depends(_(name='')(method)) for _ in authentication_classes] + \
+                       [Depends(_(method)) for _ in permission_classes]
+        return dependencies
+
     def register_routes(self):
         resource_id = "/{" + self.resource_id + "}"
         method_map = {
@@ -53,14 +64,10 @@ class BaseView:
             method = getattr(self, method_name, None)
             if self.is_method_overridden(method_name):
                 extra_params = getattr(method, '_extra_params', {})
-                custom_permission_classes = extra_params.pop('permission_classes', None)
-                custom_authentication_classes = extra_params.pop('authentication_classes', None)
-                authentication_classes = custom_authentication_classes if custom_authentication_classes is not None else self.authentication_classes
-                permission_classes = custom_permission_classes if custom_permission_classes is not None else self.permissions_classes
-                dependencies = authentication_classes + permission_classes
+                dependencies = self.get_dependencies(extra_params, method)
                 base_router.add_api_route(router_info['path'], method,
                                           methods=router_info['methods'],
-                                          dependencies=[Depends(_(method)) for _ in dependencies],
+                                          dependencies=dependencies,
                                           tags=self.tags, **extra_params)
 
     def is_method_overridden(self, method_name: str) -> bool:

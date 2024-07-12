@@ -9,17 +9,17 @@ from fastapi import Request
 
 class BasePermission:
 
-    def __init__(self, func):
-        self.func = func
+    def __init__(self, perm=None):
+        self.perm = perm
 
-    def has_permission_sync(self, request: Request):
+    def has_permission_sync(self, request: Request) -> bool:
         raise NotImplementedError()
 
-    async def has_permission(self, request: Request):
+    async def has_permission(self, request: Request) -> bool:
         raise NotImplementedError()
 
-    async def __call__(self, request: Request):
-        if inspect.iscoroutinefunction(self.func):
-            await self.has_permission(request)
+    def __call__(self, func):
+        if inspect.iscoroutinefunction(func):
+            return self.has_permission
         else:
-            self.has_permission_sync(request)
+            return self.has_permission_sync

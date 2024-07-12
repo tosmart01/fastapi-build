@@ -30,8 +30,8 @@ async def aget_current_user(user_id) -> AnonymousUser:
 
 class BaseAuthentication:
 
-    def __init__(self, func):
-        self.func = func
+    def __init__(self, name):
+        self.name = name
 
     def set_context(self, request: Request, user):
         g.user = user
@@ -46,12 +46,32 @@ class BaseAuthentication:
     async def authenticate(self, request: Request) -> Union[User, AnonymousUser]:
         raise NotImplementedError()
 
-    async def __call__(self, request: Request):
-        if inspect.iscoroutinefunction(self.func):
-            user = await self.authenticate(request)
+    def run_auth(self, func):
+        async def execute(request: Request):
+            user = await func(request)
+            self.set_context(request, user)
+
+        return execute
+
+    def __call__(self, func):
+        if inspect.iscoroutinefunction(func):
+            def run_async(func):
+                async def execute(request: Request):
+                    user = await func(request)
+                    self.set_context(request, user)
+
+                return execute
+
+            return run_async(self.authenticate)
         else:
-            user = self.authenticate_sync(request)
-        self.set_context(request, user)
+            def run_sync(func):
+                def execute(request: Request):
+                    user = func(request)
+                    self.set_context(request, user)
+
+                return execute
+
+            return run_sync(self.authenticate_sync)
 
 
 class BaseTokenAuthentication(BaseAuthentication):

@@ -4,11 +4,11 @@
 # @File : authentication.py
 from fastapi import Request
 
-from auth.base_authentication import BaseAuthentication
+from auth.base_authentication import BaseTokenAuthentication
 from db.models.user import User
 
 
-class TokenAuthentication(BaseAuthentication):
+class TokenAuthentication(BaseTokenAuthentication):
 
     async def authenticate(self, request: Request):
         user_info = self.validate_token(request)
