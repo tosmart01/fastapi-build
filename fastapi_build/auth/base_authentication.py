@@ -33,21 +33,6 @@ class BaseAuthentication:
     def __init__(self, func):
         self.func = func
 
-    def get_jwt_value(self, request: Request) -> str:
-        token = request.headers.get('Authorization')
-        if not token:
-            raise AuthDenyError()
-        token = token.split('Bearer ')[1].strip()
-        return token
-
-    def validate_token(self, request: Request):
-        token = self.get_jwt_value(request)
-        try:
-            user_info = decode_access_token(token)
-        except Exception:
-            raise AuthDenyError()
-        return user_info
-
     def set_context(self, request: Request, user):
         g.user = user
         g.user_id = user.id
@@ -70,10 +55,25 @@ class BaseAuthentication:
 
 
 class BaseTokenAuthentication(BaseAuthentication):
+    def get_jwt_value(self, request: Request) -> str:
+        token = request.headers.get('Authorization')
+        if not token:
+            raise AuthDenyError()
+        token = token.split('Bearer ')[1].strip()
+        return token
+
+    def validate_token(self, request: Request):
+        token = self.get_jwt_value(request)
+        try:
+            user_info = decode_access_token(token)
+        except Exception:
+            raise AuthDenyError()
+        return user_info
+
     async def authenticate(self, request):
         return AnonymousUser()
 
-    def authenticate_async(self, request: Request):
+    def authenticate_sync(self, request: Request):
         return AnonymousUser()
 
 

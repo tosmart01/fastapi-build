@@ -4,9 +4,15 @@
 # @File : sql_tools.py
 from typing import Union
 
-from sqlalchemy import select, Result, Any, Row, func, text, Select
+from sqlalchemy import select, func, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Query
+
+try:
+    from sqlalchemy.engine import Row, Result
+    from sqlalchemy.sql import Select
+except:
+    from sqlalchemy import Select, Result, Row
 
 from db.backends.mysql import session, async_session
 
@@ -33,9 +39,9 @@ class QueryConverter:
             list[list]: List of lists where each inner list represents a row of values.
 
         Example:
-            >>> query = session.query(User.username, User.email).filter(User.is_active == True)
-            >>> print(query_to_value_list(query))
-            >>> [['John', '<EMAIL>']]
+            query = session.query(User.username, User.email).filter(User.is_active == True)
+            print(query_to_value_list(query))
+            [['John', '<EMAIL>']]
         """
         result = query.all()
         if not result:
@@ -58,9 +64,9 @@ class QueryConverter:
             list[dict]: List of dictionaries where each dictionary represents a row of data.
 
         Example:
-            >>> query = session.query(User.username, User.email).filter(User.is_active == True)
-            >>> print(query_to_dict_list(query))
-            >>> [{'username': 'John', 'email': '<EMAIL>'}]
+            query = session.query(User.username, User.email).filter(User.is_active == True)
+            print(query_to_dict_list(query))
+            [{'username': 'John', 'email': '<EMAIL>'}]
         """
         result = query.all()
         if not result:
@@ -84,7 +90,7 @@ class QueryConverter:
         """
         return hasattr(obj, '__table__')
 
-    async def async_execute(self, session: AsyncSession, query: select) -> Result[Any]:
+    async def async_execute(self, session: AsyncSession, query: select) -> Result:
         """
         Execute an asynchronous SQLAlchemy query.
 
@@ -93,7 +99,7 @@ class QueryConverter:
             query (select): SQLAlchemy select query to execute.
 
         Returns:
-            Result[Any]: Result object containing the query results.
+            Result: Result object containing the query results.
         """
         if session:
             result = await session.execute(query)
@@ -115,10 +121,10 @@ class QueryConverter:
             List of dictionaries, lists, or Row objects based on the conversion settings.
 
         Example:
-            >>> query = select(User.username, User.email).where(User.id.in_([1,2]))
-            >>> result = session.execute(query).all()
-            >>> print(convert_all(result, to_dict=True))
-            >>> [{'username': 'John', 'email': '<EMAIL>'}]
+            query = select(User.username, User.email).where(User.id.in_([1,2]))
+            result = session.execute(query).all()
+            print(convert_all(result, to_dict=True))
+            [{'username': 'John', 'email': '<EMAIL>'}]
         """
         if not result:
             return result
@@ -149,10 +155,10 @@ class QueryConverter:
             Dictionary or Row object based on the conversion settings.
 
         Example:
-            >>> query = select(User.username, User.email).where(User.id.in_([1,2]))
-            >>> result = session.execute(query).first()
-            >>> print(convert_one(result, to_dict=True))
-            >>> {'username': 'John', 'email': '<EMAIL>'}
+            query = select(User.username, User.email).where(User.id.in_([1,2]))
+            result = session.execute(query).first()
+            print(convert_one(result, to_dict=True))
+            {'username': 'John', 'email': '<EMAIL>'}
         """
 
         is_model_instance = self.check_model_instance(row[0])
@@ -175,9 +181,9 @@ class QueryConverter:
             Union[list[Row], list[dict], list[list]]: List of rows in the desired format.
 
         Example:
-            >>> query = select(User.username, User.email).where(User.id.in_([1,2]))
-            >>> print(fetchall(query, to_dict=True))
-            >>> [{'username': 'John', 'email': '<EMAIL>'}]
+            query = select(User.username, User.email).where(User.id.in_([1,2]))
+            print(fetchall(query, to_dict=True))
+            [{'username': 'John', 'email': '<EMAIL>'}]
         """
         result = session.execute(query)
         result = result.all()
@@ -199,10 +205,10 @@ class QueryConverter:
             Union[list[Row], list[dict], list[list]]: List of rows in the desired format.
 
         Example:
-            >>> query = select(User.username, User.email).where(User.id.in_([1,2]))
-            >>> result = await a_fetchall(query, to_dict=True)
-            >>> result
-            >>> [{'username': 'John', 'email': '<EMAIL>'}]
+            query = select(User.username, User.email).where(User.id.in_([1,2]))
+            result = await a_fetchall(query, to_dict=True)
+            result
+            [{'username': 'John', 'email': '<EMAIL>'}]
         """
         result = await self.async_execute(_session, query)
         result = result.all()
@@ -220,10 +226,10 @@ class QueryConverter:
             Union[Row, dict]: First row in the desired format.
 
         Example:
-            >>> query = select(User.username, User.email).where(User.id.in_([1,2]))
-            >>> result = fetchone(query, to_dict=True)
-            >>> result
-            >>> {'username': 'John', 'email': '<EMAIL>'}
+            query = select(User.username, User.email).where(User.id.in_([1,2]))
+            result = fetchone(query, to_dict=True)
+            result
+            {'username': 'John', 'email': '<EMAIL>'}
         """
         result = session.execute(query)
         row = result.first()
@@ -242,10 +248,10 @@ class QueryConverter:
             Union[Row, dict]: First row in the desired format.
 
         Example:
-            >>> query = select(User.username, User.email).where(User.id.in_([1,2]))
-            >>> result = await a_fetchone(query, to_dict=True)
-            >>> result
-            >>> {'username': 'John', 'email': '<EMAIL>'}
+            query = select(User.username, User.email).where(User.id.in_([1,2]))
+            result = await a_fetchone(query, to_dict=True)
+            result
+            {'username': 'John', 'email': '<EMAIL>'}
         """
         result = await self.async_execute(_session, query)
         row = result.first()
@@ -262,10 +268,10 @@ class QueryConverter:
             int: Count of results.
 
         Example:
-            >>> query = select(User.username, User.email).where(User.id.in_([1,2]))
-            >>> result = fetch_count(query)
-            >>> result
-            >>> 10
+            query = select(User.username, User.email).where(User.id.in_([1,2]))
+            result = fetch_count(query)
+            result
+            10
         """
         subquery = query.subquery()
         q = select(func.count(text('1'))).select_from(subquery)
@@ -283,10 +289,10 @@ class QueryConverter:
             int: Count of results.
 
         Example:
-            >>> query = select(User.username, User.email).where(User.id.in_([1,2]))
-            >>> result = await a_fetch_count(query)
-            >>> result
-            >>> 10
+            query = select(User.username, User.email).where(User.id.in_([1,2]))
+            result = await a_fetch_count(query)
+            result
+            10
         """
         subquery = query.subquery()
         q = select(func.count(text('1'))).select_from(subquery)
@@ -306,15 +312,15 @@ class QueryConverter:
             tuple[int, list[dict]]: Total count of results and list of results for the requested page.
 
         Example:
-            >>> query = select(User.username, User.email).where(User.id.in_([1,2]))
-            >>> total, result = pagination(query)
-            >>> total, result
-            >>> 10, [{"username": "John", "email": "<EMAIL>"}, ...]
+            query = select(User.username, User.email).where(User.id.in_([1,2]))
+            total, result = pagination(query)
+            total, result
+            10, [{"username": "John", "email": "<EMAIL>"}, ...]
 
-            >>> query = session.query(User.username, User.email).where(User.id.in_([1, 2]))
-            >>> total, result = pagination(query)
-            >>> total, result
-            >>> 10, [{"username": "John", "email": "<EMAIL>"}, ...]
+            query = session.query(User.username, User.email).where(User.id.in_([1, 2]))
+            total, result = pagination(query)
+            total, result
+            10, [{"username": "John", "email": "<EMAIL>"}, ...]
         """
         offset = (page - 1) * per_page
         paginate = query.offset(offset).limit(per_page)
@@ -341,15 +347,15 @@ class QueryConverter:
             tuple[int, list[dict]]: Total count of results and list of results for the requested page.
 
         Example:
-            >>> query = select(User.username, User.email).where(User.id.in_([1,2]))
-            >>> total, result = await a_pagination(query)
-            >>> total, result
-            >>> 10, [{"username": "John", "email": "<EMAIL>"}, ...]
+            query = select(User.username, User.email).where(User.id.in_([1,2]))
+            total, result = await a_pagination(query)
+            total, result
+            10, [{"username": "John", "email": "<EMAIL>"}, ...]
 
-            >>> query = session.query(User.username, User.email).where(User.id.in_([1, 2]))
-            >>> total, result = await a_pagination(query)
-            >>> total, result
-            >>> 10, [{"username": "John", "email": "<EMAIL>"}, ...]
+            query = session.query(User.username, User.email).where(User.id.in_([1, 2]))
+            total, result = await a_pagination(query)
+            total, result
+            10, [{"username": "John", "email": "<EMAIL>"}, ...]
 
         """
         offset = (page - 1) * per_page
