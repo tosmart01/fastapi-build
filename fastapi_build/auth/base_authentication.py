@@ -46,13 +46,6 @@ class BaseAuthentication:
     async def authenticate(self, request: Request) -> Union[User, AnonymousUser]:
         raise NotImplementedError()
 
-    def run_auth(self, func):
-        async def execute(request: Request):
-            user = await func(request)
-            self.set_context(request, user)
-
-        return execute
-
     def __call__(self, func):
         if inspect.iscoroutinefunction(func):
             def run_async(func):
