@@ -179,6 +179,52 @@ User.objects.update_by_id()
 await User.objects.a_update_by_id()
 # ...等其他操作
 ```
+## 声明式身份验证
+1. 定义身份验证类
+ - **需要实现同步异步两个方法**
+```python
+from fastapi import Request
+
+from auth.base_authentication import BaseAuthentication
+from db.models.user import User
+
+
+class TokenAuthentication(BaseAuthentication):
+
+    async def authenticate(self, request: Request):
+        user_info = self.validate_token(request)
+        user = await User.objects.aget_by_id(user_info['user_id'])
+        # 需要返回 user，可以是 pydantic 对象，可以是 sqlalchemy对象
+        return user
+
+    def authenticate_sync(self, request: Request):
+        user_info = self.validate_token(request)
+        user = User.objects.get_by_id(user_info['user_id'])
+        # 需要返回 user，可以是 pydantic 对象，可以是 sqlalchemy对象
+        return user
+```
+2. 视图类中声明
+- 如果需要全局设置，可以修改BaseView  authentication_classes
+- 可以为每个视图函数单独指定验证类, @api_description(authentication_classes=[])
+- 通过验证后可以在 视图函数或者g变量中访问 user
+```python
+from core.context import g
+class DemoView(BaseView):
+    authentication_classes = [TokenAuthentication, ]
+
+    @api_description(summary="用户详情", response_model=Res(UserItemResponse))
+    async def detail(self, _id: int):
+        user = User.objects.aget(User.id == _id, raise_not_found=True)
+        return self.message(data=user)
+
+    @api_description(summary="用户查询", response_model=Res(UserListResponse), authentication_classes=[])
+    def get(self, query: UserQueryParams = Depends(UserQueryParams)):
+        self.request  # request对象直接通过self获取
+        self.user  # 直接获取user对象
+        g.user 
+        total, users = User.objects.search(query)
+        return self.message(data={'total': total, 'results': users}
+```
 
 ## 中间件
 
