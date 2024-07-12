@@ -2,7 +2,6 @@
 # @Time : 2024/5/16 10:14
 # @Author : PinBar
 # @File : decorator.py
-from typing import Type
 
 from fastapi.routing import *
 

@@ -3,6 +3,8 @@
 # @Author : PinBar
 # @File : base_params.py
 from typing import Annotated
+
+from pydantic import BaseModel
 from fastapi import Query
 
 
@@ -11,3 +13,8 @@ class PaginateParams(object):
                  page: Annotated[int, Query(description='页码')] = 1, ):
         self.per_page = per_page
         self.page = page
+
+
+class PostPageParams(BaseModel):
+    page: int = 1
+    per_page: int = 10
