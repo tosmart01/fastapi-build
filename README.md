@@ -1,6 +1,7 @@
 ## 简介
 
 `fastapi-build` 是一个强大的 CLI 工具，用于搭建 FastAPI 项目脚手架。受 Django 管理功能的启发，它允许开发者：
+
 - 命令行快速设置 FastAPI 应用程序的基本结构和依赖项。
 - 提供视图类支持
 - 不依赖注入的身份验证，类似djangorestframework 声明式, authentication_classes = []
@@ -9,7 +10,9 @@
 - 自定义错误处理等集成
 
 ## 安装
+
 必要条件： python >=3.9
+
 ```shell
 $ pip install fastapi-build --index-url=https://pypi.org/sample
 ```
@@ -18,15 +21,18 @@ $ pip install fastapi-build --index-url=https://pypi.org/sample
 
 ### 创建新项目
 
-`fbuild startproject` 
+`fbuild startproject`
+
 ```shell
 $ fbuild startproject myproject
+
 # 也可以使用 --example-api 添加demo接口示例
 $ fbuild startproject --example-api myproject
 ```
 
 ### 创建新应用
-`fbuild startapp` 
+
+`fbuild startapp`
 
 ```shell
 $ cd myproject/src
@@ -54,6 +60,7 @@ $ fbuild add_plugin plugin_name
 - **all**: 安装所有插件
 
 #### 其他命令行
+
 ```shell
 $ fbuild --help
 Usage: fbuild [OPTIONS] COMMAND [ARGS]...
@@ -71,6 +78,169 @@ Commands:
 
 
 ```
+
+## 运行项目
+
+```
+$ cd src
+$ python server.py
+INFO:     Started server process [70055]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:6100 (Press CTRL+C to quit)
+
+
+```
+
+访问 http://127.0.0.1:6100/docs 查看文档
+
+## 基于类的视图
+
+1. 创建app: fbuild startapp example_api
+2. 编辑 api/example_api/urls.py
+
+```python
+from . import APP_NAME
+from core.base_view import path
+from .example_view import ExampleView
+
+urlpatterns = [
+    path('/test', ExampleView, tags=[APP_NAME])
+]
+```
+
+3. 编写视图类
+   api/example_api/view.py
+   目前支持在 视图类中复写以下函数
+
+- get, get请求，get查询,不带路径id
+- detail, get请求,根据路径id查询
+- post, post请求，表单提交
+- query_post, post请求，用于复杂参数的post方式查询
+- put, put请求，根据路径id的表单更新
+- multi_put, put请求，带请求体批量更新
+- delete, delete请求, 根据路径id的删除请求
+- multi_delete, delete请求，带请求体的批量删除
+
+```python
+from fastapi import Depends
+
+from .request_schema import UserQueryParams, UserCreateModel, UserLoginModel, UserLoginResponseModel
+from .response_schema import UserListResponse, UserItemResponse
+from core.decorator import api_description
+from core.base_view import BaseView
+from db.models.user import User
+from core.response import Res
+from auth.authentication import TokenAuthentication
+
+
+class DemoView(BaseView):
+    authentication_classes = [TokenAuthentication, ]
+
+    @api_description(summary="用户详情", response_model=Res(UserItemResponse))
+    def detail(self, _id: int):
+        user = User.objects.get(User.id == _id, raise_not_found=True)
+        return self.message(data=user)
+
+    @api_description(summary="用户查询", response_model=Res(UserListResponse))
+    async def get(self, query: UserQueryParams = Depends(UserQueryParams)):
+        self.request  # request对象直接通过self获取
+        self.user  # 直接获取user对象
+        total, users = await User.objects.search(query)
+        return self.message(data={'total': total, 'results': users}
+```
+
+## 仿Django ORM 操作
+
+### 类似 Django 的 ORM
+
+提供的类似 Django 的 ORM 操作的有限集成，例如:
+
+```python
+from db.models.base import BaseModel
+
+
+class User(BaseModel):
+    __tablename__ = 'user'
+    username = Column(String(32))
+    # you column ...
+
+
+User.objects.get()
+await User.objects.aget()
+
+User.objects.get_by_ids(to_dict=True)
+await User.objects.aget_by_ids(to_dict=True)
+
+User.objects.create()
+await User.objects.a_create()
+
+User.objects.update_by_id()
+await User.objects.a_update_by_id()
+# ...等其他操作
+```
+
+## 中间件
+
+内置了接口信息打印，访问时长记录，跨域CORS，自定义错误返回结构等。
+
+- src/middleware/middle.py
+
+## 配置文件
+
+提供了基础的数据库，时区，日志路径等配置,本地开发可以使用 dev.py 覆盖配置
+
+- src/config/settings.py
+
+## 日志配置
+
+**使用loguru管理日志**
+
+- src/common.log.py
+
+## 错误处理
+
+```python
+from exceptions.custom_exception import ParamsError
+from exceptions.http_status import HTTP_500_INTERNAL_SERVER_ERROR
+
+
+# 接口中直接使用
+async def post(request: Request):
+    raise ParamsError(message="username must be string")
+
+
+# 将返回：
+# http_code: 400
+res: {"code": 400, "message": "username must be string"}
+
+# 可指定 http_code
+ParamsError(message="username must be string", http_code=HTTP_500_INTERNAL_SERVER_ERROR)
+
+# 可自定义错误类
+from exceptions.base import ApiError
+
+
+class ValidatePhoneError(ApiError):
+    default_code = ParamCheckError
+    default_message = "请输出正确的手机号"
+    default_http_code = HTTP_400_BAD_REQUEST
+
+```
+
+## 启动项目
+
+```shell
+cd src
+python server.py
+```
+
+## 访问接口文档
+
+- 根据app名称分组，接口名称及参数可添加注释，
+- 返回结构为 {"code": 0, "data": [], "message": ""} 制作完成
+  ![apidocs2](./docs/asset/img/api_docs2.png)
+  ![apidocs](./docs/asset/img/apidocs.png)
 
 ## 项目结构
 
@@ -93,7 +263,9 @@ Commands:
     │       └── view.py
     ├── auth
     │   ├── __init__.py
-    │   ├── authenticate.py
+    │   ├── authentication.py
+    │   ├── base_authentication.py
+    │   ├── base_permission.py
     │   └── hashers.py
     ├── common
     │   ├── __init__.py
@@ -110,6 +282,7 @@ Commands:
     │   ├── __init__.py
     │   ├── base_params.py
     │   ├── base_view.py
+    │   ├── context.py
     │   ├── decorator.py
     │   └── response.py
     ├── dao
@@ -136,150 +309,6 @@ Commands:
     │   ├── __init__.py
     │   └── register.py
     └── server.py
-```
-
-## 运行项目
-```
-$ cd src
-$ python server.py
-INFO:     Started server process [70055]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:6100 (Press CTRL+C to quit)
-
-
-```
-访问 http://127.0.0.1:6100/docs 查看文档
-
-## 配置文件
-提供了基础的数据库，时区，日志路径等配置,本地开发可以使用 dev.py 覆盖配置
-- src/config/settings.py
-
-### 日志配置
-**使用loguru管理日志**
-- src/common.log.py
-
-
-## 基于类的视图
-1. 创建app: fbuild startapp example_api 
-2. 编辑 api/example_api/urls.py
-```python
-from . import APP_NAME
-from core.base_view import path
-from .example_view import ExampleView
-
-
-urlpatterns = [
-    path('/test', ExampleView, tags=[APP_NAME])
-]
-```
-
-3. 编写视图类
-api/example_api/view.py
-目前支持在 视图类中复写以下函数
- - get, get请求，get查询,不带路径id
- - detail, get请求,根据路径id查询 
- - post, post请求，表单提交
- - query_post, post请求，用于复杂参数的post方式查询
- - put, put请求，根据路径id的表单更新
- - multi_put, put请求，带请求体批量更新
- - delete, delete请求, 根据路径id的删除请求
- - multi_delete, delete请求，带请求体的批量删除
-
-```python
-from fastapi import Depends
-
-from .request_schema import UserQueryParams, UserCreateModel, UserLoginModel, UserLoginResponseModel
-from .response_schema import UserListResponse, UserItemResponse
-from core.decorator import api_description
-from core.base_view import BaseView
-from db.models.user import User
-from core.response import Res
-from auth.authentication import TokenAuthentication
-
-
-
-class DemoView(BaseView):
-    authentication_classes = [TokenAuthentication, ]
-
-    @api_description(summary="用户详情", response_model=Res(UserItemResponse))
-    def detail(self, _id: int):
-        user = User.objects.get(User.id == _id, raise_not_found=True)
-        return self.message(data=user)
-
-    @api_description(summary="用户查询", response_model=Res(UserListResponse))
-    async def get(self, query: UserQueryParams = Depends(UserQueryParams)):
-        self.request  # request对象直接通过self获取
-        self.user  # 直接获取user对象
-        total, users = await User.objects.search(query)
-        return self.message(data={'total': total, 'results': users}
-```
-
-4. 启动项目
-```shell
-cd src
-python server.py
-```
-5. 访问接口文档
-- 根据app名称分组，接口名称及参数可添加注释，
-- 返回结构为 {"code": 0, "data": [], "message": ""} 制作完成
-![apidocs2](./docs/asset/img/api_docs2.png)
-![apidocs](./docs/asset/img/apidocs.png)
-
-
-## 仿Django ORM 操作
-
-### 类似 Django 的 ORM
-
-提供的类似 Django 的 ORM 操作的有限集成，例如:
-
-```python
-from db.models.base import BaseModel
-class User(BaseModel):
-    __tablename__ = 'user'
-    username = Column(String(32))
-    # you column ...
-    
-User.objects.get()
-await User.objects.aget()
-
-User.objects.get_by_ids(to_dict=True)
-await User.objects.aget_by_ids(to_dict=True)
-
-User.objects.create()
-await User.objects.a_create()
-
-User.objects.update_by_id()
-await User.objects.a_update_by_id()
-# ...等其他操作
-```
-
-## 中间件
-内置了接口信息打印，访问时长记录，跨域CORS，自定义错误返回结构等。
-- src/middleware/middle.py
-
-## 错误处理
-```python
-from exceptions.custom_exception import ParamsError
-from exceptions.http_status import HTTP_500_INTERNAL_SERVER_ERROR
-# 接口中直接使用
-async def post(request: Request):
-    raise ParamsError(message="username must be string")
-
-# 将返回：
-# http_code: 400
-res: {"code": 400, "message": "username must be string"}
-
-# 可指定 http_code
-ParamsError(message="username must be string", http_code=HTTP_500_INTERNAL_SERVER_ERROR)
-
-# 可自定义错误类
-from exceptions.base import ApiError
-class ValidatePhoneError(ApiError):
-    default_code = ParamCheckError
-    default_message = "请输出正确的手机号"
-    default_http_code = HTTP_400_BAD_REQUEST
-
 ```
 
 ## 贡献指南
