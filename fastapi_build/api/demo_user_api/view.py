@@ -7,23 +7,23 @@ from fastapi import Depends
 from auth.hashers import verify_password, create_access_token
 from .request_schema import UserQueryParams, UserCreateModel, UserLoginModel, UserLoginResponseModel
 from .response_schema import UserListResponse, UserItemResponse
-from auth.authenticate import login_required
 from core.decorator import api_description
 from core.base_view import BaseView
-from db.models.user import User, Parent
+from db.models.user import User
 from core.response import Res
+from auth.authentication import TokenAuthentication
 from exceptions.custom_exception import PasswordError
 
 
 class DemoView(BaseView):
-    authentication_methods = [login_required]
+    authentication_classes = [TokenAuthentication]
 
     @api_description(summary="用户详情", response_model=Res(UserItemResponse))
     def detail(self, _id: int):
         user = User.objects.get(User.id == _id, raise_not_found=True, to_dict=True)
         return self.message(data=user)
 
-    @api_description(summary="用户查询", response_model=Res(UserListResponse))
+    @api_description(summary="用户查询", response_model=Res(UserListResponse), authentication_classes=[])
     async def get(self, query: UserQueryParams = Depends(UserQueryParams)):
         total, users = await User.objects.search(query)
         return self.message(data={'total': total, 'results': users})

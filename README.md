@@ -1,6 +1,12 @@
 ## 简介
 
-`fastapi-build` 是一个强大的 CLI 工具，用于搭建 FastAPI 项目脚手架。受 Django 管理功能的启发，它允许开发者快速设置 FastAPI 应用程序的基本结构和依赖项。提供视图类，仿Django ORM风格操作，自定义错误处理等集成
+`fastapi-build` 是一个强大的 CLI 工具，用于搭建 FastAPI 项目脚手架。受 Django 管理功能的启发，它允许开发者：
+- 命令行快速设置 FastAPI 应用程序的基本结构和依赖项。
+- 提供视图类支持
+- 不依赖注入的身份验证，类似djangorestframework 声明式, authentication_classes = []
+- 仿flask的g变量，g.request, g.user
+- 仿Django ORM风格操作
+- 自定义错误处理等集成
 
 ## 安装
 必要条件： python >=3.9
@@ -179,30 +185,32 @@ api/example_api/view.py
  - multi_put, put请求，带请求体批量更新
  - delete, delete请求, 根据路径id的删除请求
  - multi_delete, delete请求，带请求体的批量删除
+
 ```python
 from fastapi import Depends
 
 from .request_schema import UserQueryParams, UserCreateModel, UserLoginModel, UserLoginResponseModel
 from .response_schema import UserListResponse, UserItemResponse
-from auth.authenticate import login_required
 from core.decorator import api_description
 from core.base_view import BaseView
 from db.models.user import User
 from core.response import Res
+from auth.authentication import TokenAuthentication
+
 
 
 class DemoView(BaseView):
-    method_decorators = [login_required, ]
+    authentication_classes = [TokenAuthentication, ]
 
     @api_description(summary="用户详情", response_model=Res(UserItemResponse))
-    async def detail(self, _id: int):
+    def detail(self, _id: int):
         user = User.objects.get(User.id == _id, raise_not_found=True)
         return self.message(data=user)
 
     @api_description(summary="用户查询", response_model=Res(UserListResponse))
     async def get(self, query: UserQueryParams = Depends(UserQueryParams)):
-        self.request # request对象直接通过self获取
-        self.user # 直接获取user对象
+        self.request  # request对象直接通过self获取
+        self.user  # 直接获取user对象
         total, users = await User.objects.search(query)
         return self.message(data={'total': total, 'results': users}
 ```
@@ -229,10 +237,14 @@ python server.py
 from db.models.base import BaseModel
 class User(BaseModel):
     __tablename__ = 'user'
+    username = Column(String(32))
     # you column ...
     
 User.objects.get()
 await User.objects.aget()
+
+User.objects.get_by_ids(to_dict=True)
+await User.objects.aget_by_ids(to_dict=True)
 
 User.objects.create()
 await User.objects.a_create()
@@ -244,7 +256,7 @@ await User.objects.a_update_by_id()
 
 ## 中间件
 内置了接口信息打印，访问时长记录，跨域CORS，自定义错误返回结构等。
-- src/middleware/register.py
+- src/middleware/middle.py
 
 ## 错误处理
 ```python

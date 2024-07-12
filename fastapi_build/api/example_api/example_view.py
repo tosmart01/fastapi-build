@@ -14,6 +14,8 @@ from .request_schema import ExampleRequestModel
 
 
 class ExampleView(BaseView):
+    authentication_classes = []
+    permissions_classes = []
 
     @api_description(summary='example view get query', response_model=Res(ExampleResponseModel))
     def get(self, name: Annotated[str, Query(description='名称', min_length=1)]):
