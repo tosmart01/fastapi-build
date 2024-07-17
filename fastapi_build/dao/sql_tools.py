@@ -8,13 +8,15 @@ from sqlalchemy import select, func, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Query
 
+from core.context import g
+
 try:
     from sqlalchemy.engine import Row, Result
     from sqlalchemy.sql import Select
 except:
     from sqlalchemy import Select, Result, Row
 
-from db.backends.mysql import session, async_session
+from db.backends.mysql import session, async_session_maker
 
 
 class QueryConverter:
@@ -104,8 +106,8 @@ class QueryConverter:
         if session:
             result = await session.execute(query)
         else:
-            async with async_session() as session:
-                result = await session.execute(query)
+            session = g.session
+            result = await session.execute(query)
         return result
 
     def convert_all(self, result: list[Row], to_dict: bool = False, value_list: bool = False):
@@ -361,7 +363,7 @@ class QueryConverter:
         offset = (page - 1) * per_page
         total = await self.a_fetch_count(query, _session)
         paginate = query.offset(offset).limit(per_page)
-        result = await self.a_fetchall(paginate, to_dict=True)
+        result = await self.a_fetchall(paginate, to_dict=True, _session=session)
         return total, result
 
 

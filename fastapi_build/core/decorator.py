@@ -12,6 +12,7 @@ from auth.base_permission import BasePermission
 def api_description(
         authentication_classes: List[Type[BaseAuthentication]] = None,
         permission_classes: List[Type[BasePermission]] = None,
+        depend_async_session: bool = False,
         response_model: Any = Default(None),
         status_code: Optional[int] = None,
         tags: Optional[List[Union[str, Enum]]] = None,
@@ -65,7 +66,10 @@ def api_description(
             ('openapi_extra', openapi_extra),
             ('generate_unique_id_function', generate_unique_id_function),
         ]
-        params = {"permission_classes": permission_classes, "authentication_classes": authentication_classes}
+        params = {"permission_classes": permission_classes,
+                  "authentication_classes": authentication_classes,
+                  "depend_async_session": depend_async_session
+                  }
         for field, value in names:
             if value:
                 params[field] = value

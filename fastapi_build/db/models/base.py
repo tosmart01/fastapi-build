@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import DeclarativeMeta
 from sqlalchemy import Column, Boolean
 
-from db.backends.mysql import session, engine, async_session
+from db.backends.mysql import session, engine, async_session_maker
 from dao.base import BaseDao
 
 
@@ -20,7 +20,7 @@ class CustomDeclarativeMeta(DeclarativeMeta):
                 self.objects.model_cls = self
                 self.objects.base_filter = (self.objects.model_cls.is_delete == 0,)
                 self.objects.session = session
-                self.objects.async_session = async_session
+                self.objects.async_session_maker = async_session_maker
 
 
 Base = declarative_base(metaclass=CustomDeclarativeMeta)

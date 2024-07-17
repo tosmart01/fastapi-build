@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from api.demo_user_api.request_schema import UserQueryParams
 from auth.hashers import make_password
+from core.context import g
 from exceptions.base import ApiError
 from .sql_tools import database
 from .base import BaseDao
@@ -46,13 +47,13 @@ class UserDao(BaseDao):
         return user
 
     async def search(self, params: UserQueryParams) -> tuple[int, list["User"]]:
-        async with self.async_session() as session:
-            query = select(self.model_cls).where(*self.base_filter, )
-            if params.username:
-                query = query.where(self.model_cls.username == params.username)
-            if params.email:
-                query = query.where(self.model_cls.email == params.email)
-            total, result = await database.a_pagination(query=query, per_page=params.paginate_params.per_page,
-                                                        page=params.paginate_params.page, _session=session
-                                                        )
-            return total, result
+        session = g.session
+        query = select(self.model_cls).where(*self.base_filter, )
+        if params.username:
+            query = query.where(self.model_cls.username == params.username)
+        if params.email:
+            query = query.where(self.model_cls.email == params.email)
+        total, result = await database.a_pagination(query=query, per_page=params.paginate_params.per_page,
+                                                    page=params.paginate_params.page
+                                                    )
+        return total, result

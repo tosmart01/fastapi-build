@@ -18,7 +18,7 @@ class User(BaseModel):
     nickname = Column(String(32), comment='昵称', nullable=False)
     email = Column(String(32), comment='邮箱')
     password = Column(String(60), comment='密码')
-    creator_id = Column(Integer, comment='创建人', nullable=True, default=lambda _: g.user_id)
+    creator_id = Column(Integer, comment='创建人', nullable=True, default=lambda _: getattr(g, 'user_id', None))
 
 
 class Parent(BaseModel):

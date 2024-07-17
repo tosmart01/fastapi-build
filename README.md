@@ -156,21 +156,23 @@ from core.decorator import api_description
 from core.base_view import BaseView
 from db.models.user import User
 from core.response import Res
+from core.context import g
 from auth.authentication import TokenAuthentication
 
 
 class DemoView(BaseView):
     authentication_classes = [TokenAuthentication, ]
 
-    @api_description(summary="用户详情", response_model=Res(UserItemResponse))
+    @api_description(summary="用户详情", response_model=Res(UserItemResponse), depend_async_session=True)
     def detail(self, _id: int):
         user = User.objects.get(User.id == _id, raise_not_found=True)
         return self.message(data=user)
 
-    @api_description(summary="用户查询", response_model=Res(UserListResponse))
+    @api_description(summary="用户查询", response_model=Res(UserListResponse), depend_async_session=True)
     async def get(self, query: UserQueryParams = Depends(UserQueryParams)):
         self.request  # request对象直接通过self获取
         self.user  # 直接获取user对象
+        g.session # 获取async session对象
         total, users = await User.objects.search(query)
         return self.message(data={'total': total, 'results': users}
 ```

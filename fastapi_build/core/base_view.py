@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends
 
 from auth.base_authentication import BaseTokenAuthentication
 from core.context import g
+from db.backends.mysql import get_db
 
 base_router = APIRouter()
 
@@ -46,6 +47,9 @@ class BaseView:
                               self.permissions_classes)
         dependencies = [Depends(_(name='')(method)) for _ in authentication_classes] + \
                        [Depends(_(method)) for _ in permission_classes]
+        depend_async_session: bool = extra_params.pop("depend_async_session", False)
+        if depend_async_session:
+            dependencies.append(Depends(get_db))
         return dependencies
 
     def register_routes(self):

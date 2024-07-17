@@ -9,6 +9,7 @@ from sqlalchemy import desc, asc, select, func, update, delete, Row
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio.session import AsyncSession, async_sessionmaker
 
+from core.context import g
 from .sql_tools import database
 from exceptions.custom_exception import NotFoundError, MultipleReturnedError
 
@@ -22,7 +23,7 @@ class BaseDao:
 
     model_cls: Type[T] = None
     session: Session = None
-    async_session: async_sessionmaker[AsyncSession] = None
+    async_session_maker: async_sessionmaker[AsyncSession] = None
     base_filter = ()
 
     def get_query(self, query_field: Optional[Union[List, tuple]] = None):
@@ -546,20 +547,20 @@ class BaseDao:
         :param raise_not_found: Whether to raise NotFoundError if no result is found
         :return: Single record or None
         """
-        async with self.async_session() as session:
-            query = self.aget_query(query_field)
-            count_query = select(func.count()).select_from(self.model_cls).filter(*self.base_filter, *args)
-            count = await session.execute(count_query)
-            count = count.scalar()
-            if count > 1:
-                raise MultipleReturnedError()
-            if query_field:
-                query = select(*query_field)
-            query = query.filter(*args)
-            row = await database.a_fetchone(query, to_dict=to_dict, _session=session)
-            if not row and raise_not_found:
-                raise NotFoundError()
-            return row
+        session: AsyncSession = g.session
+        query = self.aget_query(query_field)
+        count_query = select(func.count()).select_from(self.model_cls).filter(*self.base_filter, *args)
+        count = await session.execute(count_query)
+        count = count.scalar()
+        if count > 1:
+            raise MultipleReturnedError()
+        if query_field:
+            query = select(*query_field)
+        query = query.filter(*args)
+        row = await database.a_fetchone(query, to_dict=to_dict, _session=session)
+        if not row and raise_not_found:
+            raise NotFoundError()
+        return row
 
     async def aget_by_id(
             self,
@@ -579,14 +580,14 @@ class BaseDao:
         :param raise_not_found: Whether to raise NotFoundError if no result is found
         :return: Single record or None
         """
-        async with self.async_session() as session:
-            id_col = getattr(self.model_cls, id_field or "id", None)
-            query = self.aget_query(query_field)
-            query = query.filter(id_col == model_id)
-            row = await database.a_fetchone(query, to_dict=to_dict, _session=session)
-            if not row and raise_not_found:
-                raise NotFoundError()
-            return row
+        session: AsyncSession = g.session
+        id_col = getattr(self.model_cls, id_field or "id", None)
+        query = self.aget_query(query_field)
+        query = query.filter(id_col == model_id)
+        row = await database.a_fetchone(query, to_dict=to_dict, _session=session)
+        if not row and raise_not_found:
+            raise NotFoundError()
+        return row
 
     async def aget_by_ids(
             self,
@@ -608,15 +609,15 @@ class BaseDao:
         :param id_field: Field name of the ID column
         :return: List of records or an empty list
         """
-        async with self.async_session() as session:
-            id_col = getattr(self.model_cls, id_field or "id", None)
-            if id_col is None:
-                return []
-            query = self.aget_query(query_field)
-            query = query.filter(id_col.in_(model_ids))
-            queryset = self.order_by(order=order_by, queryset=query)
-            rows = await database.a_fetchall(queryset, to_dict=to_dict, value_list=value_list, _session=session)
-            return rows
+        session: AsyncSession = g.session
+        id_col = getattr(self.model_cls, id_field or "id", None)
+        if id_col is None:
+            return []
+        query = self.aget_query(query_field)
+        query = query.filter(id_col.in_(model_ids))
+        queryset = self.order_by(order=order_by, queryset=query)
+        rows = await database.a_fetchall(queryset, to_dict=to_dict, value_list=value_list, _session=session)
+        return rows
 
     async def a_create(
             self,
@@ -631,18 +632,19 @@ class BaseDao:
         :return: Created record
         :raises: Exception if creation fails
         """
-        async with self.async_session() as session:
-            model = self.model_cls
-            obj = model(**properties)
-            try:
-                session.add(obj)
-                await session.flush()
-                if commit:
-                    await session.commit()
-            except Exception as ex:
-                await session.rollback()
-                raise ex
-            return obj
+        session: AsyncSession = g.session
+        model = self.model_cls
+        obj = model(**properties)
+        try:
+            session.add(obj)
+            await session.flush()
+            if commit:
+                await session.commit()
+        except Exception as ex:
+            await session.rollback()
+            raise ex
+        await session.refresh(obj)
+        return obj
 
     async def a_update(
             self,
@@ -661,25 +663,26 @@ class BaseDao:
         :return: Number of records updated
         :raises: Exception if update fails
         """
-        async with self.async_session() as session:
-            try:
-                subquery = queryset.subquery()
-                col = getattr(self.model_cls, id_col)
-                stmt = (
-                    update(self.model_cls)
-                    .where(col.in_(getattr(subquery.c, id_col)))
-                    .values(**properties)
-                    .execution_options(synchronize_session="fetch")
-                )
-                result = await session.execute(stmt)
-                if is_commit:
-                    await session.commit()
-            except Exception as ex:
-                self.session.rollback()
-                raise ex
-            else:
-                rowcount: int = result.rowcount
-                return rowcount
+        session: AsyncSession = g.session
+
+        try:
+            subquery = queryset.subquery()
+            col = getattr(self.model_cls, id_col)
+            stmt = (
+                update(self.model_cls)
+                .where(col.in_(getattr(subquery.c, id_col)))
+                .values(**properties)
+                .execution_options(synchronize_session="fetch")
+            )
+            result = await session.execute(stmt)
+            if is_commit:
+                await session.commit()
+        except Exception as ex:
+            self.session.rollback()
+            raise ex
+        else:
+            rowcount: int = result.rowcount
+            return rowcount
 
     async def a_update_obj(
             self,
@@ -696,17 +699,17 @@ class BaseDao:
         :return: Updated model instance
         :raises: Exception if update fails
         """
-        async with self.async_session() as session:
-            for key, value in properties.items():
-                setattr(model, key, value)
-            try:
-                await session.merge(model)
-                if commit:
-                    await session.commit()
-            except Exception as ex:  # pragma: no cover
-                await session.rollback()
-                raise ex
-            return model
+        session: AsyncSession = g.session
+        for key, value in properties.items():
+            setattr(model, key, value)
+        try:
+            await session.merge(model)
+            if commit:
+                await session.commit()
+        except Exception as ex:  # pragma: no cover
+            await session.rollback()
+            raise ex
+        return model
 
     async def a_update_by_id(
             self,
@@ -729,23 +732,23 @@ class BaseDao:
         """
         if raise_not_found:
             await self.aget_by_id(model_id, id_field=id_field)
-        async with self.async_session() as session:
-            try:
-                col = getattr(self.model_cls, id_field)
-                stmt = (
-                    update(self.model_cls)
-                    .where(col == model_id, *self.base_filter)
-                    .values(**properties)
-                    .execution_options(synchronize_session="fetch")
-                )
-                result = await session.execute(stmt)
-                if commit:
-                    await session.commit()
-            except Exception as ex:
-                self.session.rollback()
-                raise ex
-            else:
-                return result.rowcount
+        session: AsyncSession = g.session
+        try:
+            col = getattr(self.model_cls, id_field)
+            stmt = (
+                update(self.model_cls)
+                .where(col == model_id, *self.base_filter)
+                .values(**properties)
+                .execution_options(synchronize_session="fetch")
+            )
+            result = await session.execute(stmt)
+            if commit:
+                await session.commit()
+        except Exception as ex:
+            self.session.rollback()
+            raise ex
+        else:
+            return result.rowcount
 
     async def a_update_by_ids(
             self,
@@ -764,23 +767,23 @@ class BaseDao:
         :return: Number of records updated
         :raises: Exception if update fails
         """
-        async with self.async_session() as session:
-            try:
-                col = getattr(self.model_cls, id_field)
-                stmt = (
-                    update(self.model_cls)
-                    .where(col.in_(model_ids), *self.base_filter)
-                    .values(**properties)
-                    .execution_options(synchronize_session="fetch")
-                )
-                result = await session.execute(stmt)
-                if commit:
-                    await session.commit()
-            except Exception as ex:
-                self.session.rollback()
-                raise ex
-            else:
-                return result.rowcount
+        session: AsyncSession = g.session
+        try:
+            col = getattr(self.model_cls, id_field)
+            stmt = (
+                update(self.model_cls)
+                .where(col.in_(model_ids), *self.base_filter)
+                .values(**properties)
+                .execution_options(synchronize_session="fetch")
+            )
+            result = await session.execute(stmt)
+            if commit:
+                await session.commit()
+        except Exception as ex:
+            self.session.rollback()
+            raise ex
+        else:
+            return result.rowcount
 
     async def a_delete_obj(
             self,
@@ -795,15 +798,15 @@ class BaseDao:
         :return: Deleted model instance
         :raises: Exception if delete fails
         """
-        async with self.async_session() as session:
-            try:
-                await session.delete(model)
-                if commit:
-                    await session.commit()
-            except Exception as ex:
-                await session.rollback()
-                raise ex
-            return model
+        session: AsyncSession = g.session
+        try:
+            await session.delete(model)
+            if commit:
+                await session.commit()
+        except Exception as ex:
+            await session.rollback()
+            raise ex
+        return model
 
     async def a_delete_by_id(
             self,
@@ -824,17 +827,17 @@ class BaseDao:
         """
         if raise_not_found:
             await self.aget_by_id(model_id, id_field=id_field, raise_not_found=raise_not_found)
-        async with self.async_session() as session:
-            try:
-                id_col = getattr(self.model_cls, id_field or "id", None)
-                query = delete(self.model_cls).where(id_col == model_id)
-                result = await session.execute(query)
-                if commit:
-                    await session.commit()
-            except Exception as ex:
-                await session.rollback()
-                raise ex
-            return result.rowcount
+        session: AsyncSession = g.session
+        try:
+            id_col = getattr(self.model_cls, id_field or "id", None)
+            query = delete(self.model_cls).where(id_col == model_id)
+            result = await session.execute(query)
+            if commit:
+                await session.commit()
+        except Exception as ex:
+            await session.rollback()
+            raise ex
+        return result.rowcount
 
     async def a_delete_by_ids(
             self,
@@ -851,17 +854,17 @@ class BaseDao:
         :return: Number of records deleted
         :raises: Exception if delete fails
         """
-        async with self.async_session() as session:
-            try:
-                id_col = getattr(self.model_cls, id_field or "id", None)
-                query = delete(self.model_cls).where(id_col.in_(model_ids))
-                result = await session.execute(query)
-                if commit:
-                    await session.commit()
-            except Exception as ex:
-                await session.rollback()
-                raise ex
-            return result.rowcount
+        session: AsyncSession = g.session
+        try:
+            id_col = getattr(self.model_cls, id_field or "id", None)
+            query = delete(self.model_cls).where(id_col.in_(model_ids))
+            result = await session.execute(query)
+            if commit:
+                await session.commit()
+        except Exception as ex:
+            await session.rollback()
+            raise ex
+        return result.rowcount
 
     async def a_soft_delete_obj(
             self,
