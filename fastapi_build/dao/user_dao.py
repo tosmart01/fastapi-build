@@ -47,7 +47,6 @@ class UserDao(BaseDao):
         return user
 
     async def search(self, params: UserQueryParams) -> tuple[int, list["User"]]:
-        session = g.session
         query = select(self.model_cls).where(*self.base_filter, )
         if params.username:
             query = query.where(self.model_cls.username == params.username)

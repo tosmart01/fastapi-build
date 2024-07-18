@@ -93,6 +93,7 @@ def register_middleware(app: FastAPI):
         query_params = dict(request.query_params)
         request_body = await request.body()
         g.request = request
+        g.extra_data = {}
         # 处理请求
         try:
             response = await call_next(request)

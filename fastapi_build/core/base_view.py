@@ -49,7 +49,7 @@ class BaseView:
                        [Depends(_(method)) for _ in permission_classes]
         depend_async_session: bool = extra_params.pop("depend_async_session", False)
         if depend_async_session:
-            dependencies.append(Depends(get_db))
+            dependencies.insert(0, Depends(get_db))
         return dependencies
 
     def register_routes(self):

@@ -580,11 +580,10 @@ class BaseDao:
         :param raise_not_found: Whether to raise NotFoundError if no result is found
         :return: Single record or None
         """
-        session: AsyncSession = g.session
         id_col = getattr(self.model_cls, id_field or "id", None)
         query = self.aget_query(query_field)
         query = query.filter(id_col == model_id)
-        row = await database.a_fetchone(query, to_dict=to_dict, _session=session)
+        row = await database.a_fetchone(query, to_dict=to_dict, _session=g.session)
         if not row and raise_not_found:
             raise NotFoundError()
         return row

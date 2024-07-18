@@ -10,18 +10,18 @@
    - [其他命令行](#其他命令行)
 4. [运行项目](#运行项目)
 5. [基于类的视图](#基于类的视图)
-6. [仿Django ORM 操作](#仿django-orm-操作)
-   - [类似 Django 的 ORM](#类似-django-的-orm)
-7. [声明式身份验证](#声明式身份验证)
-8. [中间件](#中间件)
-9. [配置文件](#配置文件)
-10. [日志配置](#日志配置)
-11. [错误处理](#错误处理)
-12. [启动项目](#启动项目)
-13. [访问接口文档](#访问接口文档)
-14. [项目结构](#项目结构)
-15. [贡献指南](#贡献指南)
-16. [许可证](#许可证)
+6. [全局g变量](#全局g变量)
+7. [仿Django ORM 操作](#仿django-orm-操作)
+8. [声明式身份验证](#声明式身份验证)
+9. [中间件](#中间件)
+10. [配置文件](#配置文件)
+11. [日志配置](#日志配置)
+12. [错误处理](#错误处理)
+13. [启动项目](#启动项目)
+14. [访问接口文档](#访问接口文档)
+15. [项目结构](#项目结构)
+16. [贡献指南](#贡献指南)
+17. [许可证](#许可证)
 
 ## 简介
 
@@ -29,6 +29,7 @@
 
 - 命令行快速设置 FastAPI 应用程序的基本结构和依赖项。
 - 提供视图类支持
+- 全局的异步sqlalchemy session 对象，await g.session.get(Model, id)
 - 不依赖注入的身份验证，类似djangorestframework 声明式, authentication_classes = []
 - 仿flask的g变量，g.request, g.user
 - 仿Django ORM风格操作
@@ -175,6 +176,30 @@ class DemoView(BaseView):
         g.session # 获取async session对象
         total, users = await User.objects.search(query)
         return self.message(data={'total': total, 'results': users}
+```
+
+## 全局g变量
+- 内置 
+1. g.request,
+2. g.user, g.user_id, 
+3. g.session(异步session), 
+4. g.extra_data(字典)
+
+```python
+from core.context import g
+from db.models.user import User
+from core.decorator import api_description
+# 获取request对象，不依赖手动注入
+g.request
+# 获取user，需要在视图类中声明  authentication_classes = [TokenAuthentication, ]
+g.user, g.user_id
+# 获取 异步session, 需要在视图函数中声明 depend_async_session = True
+@api_description(summary="用户查询",  depend_async_session=True)
+async def get(self, _id):
+    await g.session.get(User, _id)
+# 其他参数
+g.extra_data['name'] = 1
+g.extra_data['name']
 ```
 
 ## 仿Django ORM 操作

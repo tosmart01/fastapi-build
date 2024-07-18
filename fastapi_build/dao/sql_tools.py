@@ -106,8 +106,7 @@ class QueryConverter:
         if session:
             result = await session.execute(query)
         else:
-            session = g.session
-            result = await session.execute(query)
+            result = await g.session.execute(query)
         return result
 
     def convert_all(self, result: list[Row], to_dict: bool = False, value_list: bool = False):
@@ -363,7 +362,7 @@ class QueryConverter:
         offset = (page - 1) * per_page
         total = await self.a_fetch_count(query, _session)
         paginate = query.offset(offset).limit(per_page)
-        result = await self.a_fetchall(paginate, to_dict=True, _session=session)
+        result = await self.a_fetchall(paginate, to_dict=True, _session=_session)
         return total, result
 
 

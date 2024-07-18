@@ -53,7 +53,7 @@ class DemoView(BaseView):
 
 
 class LoginView(BaseView):
-    @api_description(summary="登录")
+    @api_description(summary="登录", depend_async_session=True)
     async def post(self, body: UserLoginModel) -> Res(UserLoginResponseModel):
         user: User = await User.objects.aget(User.username == body.username, raise_not_found=True)
         if verify_password(body.password, user.password):

@@ -3,33 +3,66 @@
 # @Author : zhuo.wang
 # @File : context.py
 import contextvars
+from typing import Union, Any
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from fastapi import Request
+
+_request = contextvars.ContextVar("request", default=None)
+_user_id = contextvars.ContextVar("user_id", default=None)
+_user = contextvars.ContextVar("user", default=None)
+_session = contextvars.ContextVar("session", default=None)
+_extra_data = contextvars.ContextVar("extra_data", default=None)
 
 
 class ContextVarsManager:
-    def __init__(self):
-        # 初始化一个字典来存储上下文变量
-        self._context_vars = {}
+    _support_keys = ("request", "user_id", "user", "extra_data", "session")
 
-    def __getattr__(self, name):
-        # 获取上下文变量的值，如果不存在则创建一个新的上下文变量
-        if name not in self._context_vars:
-            raise AttributeError()
-        return self._context_vars[name].get()
+    @property
+    def request(self) -> Request:
+        return _request
 
-    def __setattr__(self, name, value):
-        if name == '_context_vars':
-            super().__setattr__(name, value)
-        else:
-            if name not in self._context_vars:
-                self._context_vars[name] = contextvars.ContextVar(name)
-            self._context_vars[name].set(value)
+    @request.setter
+    def request(self, value: Request):
+        _request.set(value)
 
-    def __delattr__(self, name):
-        # 删除上下文变量的值，如果存在
-        if name in self._context_vars:
-            del self._context_vars[name]
-        else:
-            raise AttributeError(f"'ContextVarsManager' object has no attribute '{name}'")
+    @property
+    def user_id(self) -> Union[int, str, None]:
+        return _user_id.get()
+
+    @user_id.setter
+    def user_id(self, value: Union[int, str, None]):
+        _user_id.set(value)
+
+    @property
+    def user(self) -> Union[Any, BaseModel]:
+        return _user.get()
+
+    @user.setter
+    def user(self, value: Union[Any, BaseModel]):
+        _user.set(value)
+
+    @property
+    def session(self) -> AsyncSession:
+        return _session.get()
+
+    @session.setter
+    def session(self, value: AsyncSession):
+        _session.set(value)
+
+    @property
+    def extra_data(self) -> dict:
+        return _extra_data.get()
+
+    @extra_data.setter
+    def extra_data(self, value: dict):
+        _extra_data.set(value)
+
+    def __setattr__(self, name: str, value: Any):
+        if name not in self._support_keys:
+            raise ValueError(f"Invalid key {name}, supported keys: {'、'.join(self._support_keys)}")
+        return object.__setattr__(self, name, value)
 
 
 g = ContextVarsManager()
