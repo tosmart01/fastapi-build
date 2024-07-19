@@ -30,9 +30,9 @@ async_session_maker = async_sessionmaker(bind=async_engine, expire_on_commit=Fal
 
 
 class DatabaseSessionManager:
-    def __init__(self, host: str, engine_kwargs: dict[str, Any] = None):
-        self._engine = create_async_engine(host, **engine_kwargs)
-        self._sessionmaker = async_sessionmaker(autocommit=False, bind=self._engine)
+    def __init__(self):
+        self._engine = async_engine
+        self._sessionmaker = async_session_maker
 
     async def close(self):
         if self._engine is None:
@@ -69,7 +69,7 @@ class DatabaseSessionManager:
             await session.close()
 
 
-sessionmanager = DatabaseSessionManager(ASYNC_DB_URL, {"echo": False})
+sessionmanager = DatabaseSessionManager()
 
 
 async def get_db():
