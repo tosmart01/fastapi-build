@@ -161,7 +161,8 @@ class QueryConverter:
             print(convert_one(result, to_dict=True))
             {'username': 'John', 'email': '<EMAIL>'}
         """
-
+        if not row:
+            return row
         is_model_instance = self.check_model_instance(row[0])
         row = row if not is_model_instance else row[0]
         if to_dict:

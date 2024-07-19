@@ -7,6 +7,7 @@ from typing import TypeVar, Any, Union
 
 from fastapi import Request
 from pydantic import BaseModel
+from fastapi.concurrency import run_in_threadpool
 
 from auth.hashers import create_access_token, decode_access_token
 from core.context import g
@@ -47,24 +48,17 @@ class BaseAuthentication:
         raise NotImplementedError()
 
     def __call__(self, func):
-        if inspect.iscoroutinefunction(func):
-            def run_async(func):
-                async def execute(request: Request):
-                    user = await func(request)
-                    self.set_context(request, user)
+        is_async = inspect.iscoroutinefunction(func)
+        auth_func = self.authenticate if is_async else self.authenticate_sync
 
-                return execute
+        async def run(request: Request):
+            if is_async:
+                user = await auth_func(request)
+            else:
+                user = await run_in_threadpool(auth_func, request)
+            self.set_context(request, user)
 
-            return run_async(self.authenticate)
-        else:
-            def run_sync(func):
-                def execute(request: Request):
-                    user = func(request)
-                    self.set_context(request, user)
-
-                return execute
-
-            return run_sync(self.authenticate_sync)
+        return run
 
 
 class BaseTokenAuthentication(BaseAuthentication):
