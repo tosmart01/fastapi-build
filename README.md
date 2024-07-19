@@ -10,7 +10,7 @@
    - [其他命令行](#其他命令行)
 4. [运行项目](#运行项目)
 5. [基于类的视图](#基于类的视图)
-6. [同步异步 session](#同步异步sqlalchemy session)
+5. [同步异步session](#同步异步session)
 7. [全局g变量](#全局g变量)
 8. [仿Django ORM 操作](#仿django-orm-操作)
 9. [声明式身份验证](#声明式身份验证)
@@ -176,7 +176,7 @@ class DemoView(BaseView):
         total, users = await User.objects.search(query)
         return self.message(data={'total': total, 'results': users}
 ```
-## 同步异步sqlalchemy session
+## 同步异步session
 - 同步 session
 ```python
 from db.backends.mysql import session
