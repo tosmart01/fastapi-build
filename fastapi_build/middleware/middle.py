@@ -35,24 +35,27 @@ def register_middleware(app: FastAPI):
         errors = exc.errors()
         model_exc = errors.pop()
         model: BaseModel = model_exc.get('model')
-        if not model:
-            errors.append(model_exc)
-            return JSONResponse(
-                status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"message": f"{exc}", "code": 500},
-            )
-        display_error = ""
-        for error in errors:
-            for name in error['loc']:
-                field = model.model_fields.get(name)
-                if field is not None:
-                    display_field_name = name  # if not field.description else field.description
-                    display_error += f"{display_field_name} {error['msg']}"
-                    return JSONResponse(
-                        status_code=HTTP_400_BAD_REQUEST,
-                        content={"message": f"{display_error}", "code": HTTP_400_BAD_REQUEST},
-                    )
+        custom_msg: str = model_exc.get('custom_msg')
+        if model:
+            display_error = ""
+            for error in errors:
+                for name in error['loc']:
+                    field = model.model_fields.get(name)
+                    if field is not None:
+                        display_field_name = name  # if not field.description else field.description
+                        display_error += f"{display_field_name} {error['msg']}"
+                        return JSONResponse(
+                            status_code=HTTP_400_BAD_REQUEST,
+                            content={"message": f"{display_error}", "code": HTTP_400_BAD_REQUEST},
+                        )
+        elif custom_msg is not None:
+            return JSONResponse(status_code=HTTP_400_BAD_REQUEST, content={"message": custom_msg, "code": HTTP_400_BAD_REQUEST})
 
+        elif model_exc.get("loc") and "body" == model_exc.get("loc")[0]:
+                return JSONResponse(status_code=HTTP_400_BAD_REQUEST,
+                                    content={"message": f"{model_exc.get('loc')[-1]} {model_exc.get('msg')}",
+                                             "code": HTTP_400_BAD_REQUEST})
+        errors.append(model_exc)
         return JSONResponse(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
             content={"message": f"{exc}", "code": 500},

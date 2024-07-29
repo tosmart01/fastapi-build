@@ -28,7 +28,7 @@ clean_pyc_and_cache()
 
 setup(
     name="fastapi_build",
-    version="0.3.0",
+    version="0.3.1",
     packages=find_packages(),
     url="https://github.com/tosmart01/fastapi-build",
     include_package_data=True,

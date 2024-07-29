@@ -2,7 +2,9 @@
 # @Time : 2024/5/27 11:42
 # @Author : PinBar
 # @File : user.py
-from sqlalchemy import Column, String, Integer, ForeignKey, Table
+from datetime import datetime
+
+from sqlalchemy import Column, String, Integer, ForeignKey, Table, DateTime
 from sqlalchemy.orm import relationship
 
 from core.context import g
@@ -19,6 +21,7 @@ class User(BaseModel):
     email = Column(String(32), comment='邮箱')
     password = Column(String(60), comment='密码')
     creator_id = Column(Integer, comment='创建人', nullable=True, default=lambda _: getattr(g, 'user_id', None))
+    created_time = Column(DateTime, default=datetime.now, nullable=True)
 
 
 class Parent(BaseModel):
