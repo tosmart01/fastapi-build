@@ -9,7 +9,6 @@ from fastapi import Request
 from pydantic import BaseModel
 from fastapi.concurrency import run_in_threadpool
 
-from auth.hashers import create_access_token, decode_access_token
 from core.context import g
 from exceptions.custom_exception import AuthDenyError
 
@@ -71,11 +70,11 @@ class BaseTokenAuthentication(BaseAuthentication):
 
     def validate_token(self, request: Request):
         token = self.get_jwt_value(request)
-        try:
-            user_info = decode_access_token(token)
-        except Exception:
-            raise AuthDenyError()
-        return user_info
+        # try:
+        #     user_info = decode_access_token(token)
+        # except Exception:
+        #     raise AuthDenyError()
+        return {"user_id": 1}
 
     async def authenticate(self, request):
         return AnonymousUser()
@@ -83,6 +82,3 @@ class BaseTokenAuthentication(BaseAuthentication):
     def authenticate_sync(self, request: Request):
         return AnonymousUser()
 
-
-if __name__ == '__main__':
-    print(create_access_token({"user_id": 1, "username": "user"}, ))

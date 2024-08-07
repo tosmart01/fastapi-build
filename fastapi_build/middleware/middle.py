@@ -8,12 +8,13 @@ from fastapi import Request, FastAPI
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from core.context import g
 from common.log import logger
 from exceptions.base import ApiError
+from exceptions.error_code import ParamCheckError
 from exceptions.http_status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 from middleware.startup import startup
 
@@ -31,35 +32,46 @@ def register_middleware(app: FastAPI):
         allow_headers=["*"],
     )
 
-    def to_errors(exc):
+    def human_errors(exc: ValidationError) -> str:
         errors = exc.errors()
-        model_exc = errors.pop()
-        model: BaseModel = model_exc.get('model')
-        custom_msg: str = model_exc.get('custom_msg')
-        if model:
-            display_error = ""
-            for error in errors:
-                for name in error['loc']:
-                    field = model.model_fields.get(name)
-                    if field is not None:
-                        display_field_name = name  # if not field.description else field.description
-                        display_error += f"{display_field_name} {error['msg']}"
-                        return JSONResponse(
-                            status_code=HTTP_400_BAD_REQUEST,
-                            content={"message": f"{display_error}", "code": HTTP_400_BAD_REQUEST},
-                        )
-        elif custom_msg is not None:
-            return JSONResponse(status_code=HTTP_400_BAD_REQUEST, content={"message": custom_msg, "code": HTTP_400_BAD_REQUEST})
-
-        elif model_exc.get("loc") and "body" == model_exc.get("loc")[0]:
-                return JSONResponse(status_code=HTTP_400_BAD_REQUEST,
-                                    content={"message": f"{model_exc.get('loc')[-1]} {model_exc.get('msg')}",
-                                             "code": HTTP_400_BAD_REQUEST})
-        errors.append(model_exc)
-        return JSONResponse(
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"message": f"{exc}", "code": 500},
-        )
+        for error in errors:
+            loc = list(error.get('loc', []))
+            loc_len = len(loc)
+            msg = error.get('msg')
+            error_type = error.get('type')
+            if error_type == 'json_invalid':
+                return msg
+            if loc_len == 1:
+                text = f"Field {loc[0]} error: {msg}"
+                return text
+            if loc_len == 2:
+                text = "Field "
+                if isinstance(loc[1], int):
+                    text += f"{loc[0]}[{loc[1]}]"
+                if isinstance(loc[1], str):
+                    text += f"`{loc[1]}`"
+                text += ' error: ' + msg
+                return text
+            if loc_len > 2:
+                key_field = None
+                if loc[-1] == "[key]":
+                    key_field = loc.pop()
+                text = "Field "
+                for ix, field in enumerate(loc[1:]):
+                    if isinstance(field, str):
+                        if ix == 0:
+                            text += field
+                        else:
+                            text += f"['{field}']"
+                    if isinstance(field, int):
+                        text += f"[{field}]"
+                if key_field:
+                    text += f" the value '{loc[-1]}'"
+                    text += ' ' + msg
+                else:
+                    text += ' error: ' + msg
+                return text
+        return str(errors)
 
     @app.exception_handler(ApiError)
     async def custom_exception_handler(request: Request, exc: ApiError):
@@ -77,11 +89,23 @@ def register_middleware(app: FastAPI):
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request, exc):
-        return to_errors(exc)
+        try:
+            human_err = human_errors(exc)
+        except Exception:
+            logger.warning(f"format error fail:")
+            return JSONResponse(status_code=HTTP_400_BAD_REQUEST,
+                                content={"message": str(exc), "code": ParamCheckError})
+        return JSONResponse(status_code=HTTP_400_BAD_REQUEST, content={"message": human_err, "code": ParamCheckError})
 
     @app.exception_handler(ResponseValidationError)
     async def response_exception_handler(request, exc):
-        return to_errors(exc)
+        try:
+            human_err = human_errors(exc)
+        except Exception:
+            logger.warning(f"format error fail:")
+            return JSONResponse(status_code=HTTP_400_BAD_REQUEST,
+                                content={"message": str(exc), "code": ParamCheckError})
+        return JSONResponse(status_code=HTTP_400_BAD_REQUEST, content={"message": human_err, "code": ParamCheckError})
 
     @app.middleware("http")
     async def common_requests(request: Request, call_next):
@@ -119,4 +143,3 @@ def register_middleware(app: FastAPI):
         return response
 
     app.on_event("startup")(startup)
-

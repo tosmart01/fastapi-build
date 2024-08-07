@@ -17,7 +17,6 @@ def create_app() -> FastAPI:
     # create_tables()
     app.include_router(base_router, prefix='/api', )
     register_middleware(app)
-    from common import patch
 
     return app
 

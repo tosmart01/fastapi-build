@@ -3,7 +3,7 @@
 # @Author : PinBar
 # @File : mysql.py
 import contextlib
-from typing import AsyncIterator, Any, Annotated
+from typing import AsyncIterator, Annotated
 
 from fastapi import Depends
 from sqlalchemy import create_engine

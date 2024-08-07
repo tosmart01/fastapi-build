@@ -32,7 +32,7 @@
 - 不依赖注入的身份验证，类似djangorestframework 声明式, authentication_classes = []
 - 仿flask的g变量，g.request, g.user
 - 仿Django ORM风格操作
-- 自定义错误处理等集成
+- 人类可读的pydantic 异常返回
 
 ## 安装
 
@@ -331,7 +331,11 @@ class DemoView(BaseView):
 - src/common.log.py
 
 ## 错误处理
+- 人类可读的异常信息
+ 
+![](./docs/asset/img/error.jpg)
 
+- 自定义接口异常
 ```python
 from exceptions.custom_exception import ParamsError
 from exceptions.http_status import HTTP_500_INTERNAL_SERVER_ERROR
