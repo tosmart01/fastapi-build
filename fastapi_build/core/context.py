@@ -21,7 +21,7 @@ class ContextVarsManager:
 
     @property
     def request(self) -> Request:
-        return _request
+        return _request.get()
 
     @request.setter
     def request(self, value: Request):
