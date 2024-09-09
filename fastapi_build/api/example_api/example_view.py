@@ -21,8 +21,8 @@ class ExampleView(BaseView):
     def get(self, name: Annotated[str, Query(description='名称', min_length=1)]):
         return self.message(data={"name": name, "creator_id": 1})
 
-    @api_description(summary='example view detail query', response_model=Res(ExampleResponseModel))
-    async def detail(self, _id: int):
+
+    async def detail(self, _id: int) -> Res(ExampleResponseModel):
         return self.message(data={"name": 'hello', "creator_id": _id})
 
     async def post(self, data: ExampleRequestModel) -> Res(ExampleResponseModel):

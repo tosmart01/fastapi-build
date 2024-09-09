@@ -8,16 +8,18 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import Request
+from sqlalchemy.orm import Session
 
 _request = contextvars.ContextVar("request", default=None)
 _user_id = contextvars.ContextVar("user_id", default=None)
 _user = contextvars.ContextVar("user", default=None)
 _session = contextvars.ContextVar("session", default=None)
+_session_sync = contextvars.ContextVar("session_sync", default=None)
 _extra_data = contextvars.ContextVar("extra_data", default=None)
 
 
 class ContextVarsManager:
-    _support_keys = ("request", "user_id", "user", "extra_data", "session")
+    _support_keys = ("request", "user_id", "user", "extra_data", "session", "session_sync")
 
     @property
     def request(self) -> Request:
@@ -50,6 +52,14 @@ class ContextVarsManager:
     @session.setter
     def session(self, value: AsyncSession):
         _session.set(value)
+
+    @property
+    def session_sync(self) -> Session:
+        return _session_sync.get()
+
+    @session_sync.setter
+    def session_sync(self, value: Session):
+        _session_sync.set(value)
 
     @property
     def extra_data(self) -> dict:

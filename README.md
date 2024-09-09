@@ -156,84 +156,103 @@ from core.decorator import api_description
 from core.base_view import BaseView
 from db.models.user import User
 from core.response import Res
-from core.context import g
 from auth.authentication import TokenAuthentication
 
 
 class DemoView(BaseView):
     authentication_classes = [TokenAuthentication, ]
 
-    @api_description(summary="用户详情", response_model=Res(UserItemResponse), depend_async_session=True)
-    def detail(self, _id: int):
+    def detail(self, _id: int) -> Res(UserItemResponse):
         user = User.objects.get(User.id == _id, raise_not_found=True)
         return self.message(data=user)
 
-    @api_description(summary="用户查询", response_model=Res(UserListResponse), depend_async_session=True)
+    @api_description(summary="用户查询", response_model=Res(UserListResponse))
     async def get(self, query: UserQueryParams = Depends(UserQueryParams)):
-        self.request  # request对象直接通过self获取
-        self.user  # 直接获取user对象
-        g.session # 获取async session对象
         total, users = await User.objects.search(query)
-        return self.message(data={'total': total, 'results': users}
+        return self.message(data={'total': total, 'results': users})
 ```
 ## 同步异步session
+
 - 同步 session
 ```python
-from db.backends.mysql import session
-session.query()
-session.add()
+from core.context import g
+g.session_sync.query()
+g.session_sync.add()
+...
+
 ```
 - 异步session
-1. 非注入方式
+1. 非注入方式(推荐)
 ```python
 from core.context import g
-async def create_user():
-    g.session.add()
-
-@api_description(summary="用户查询",  depend_async_session=True)
-async def get(self, _id):
-    await g.session.add()
-    await create_user()
+from core.base_view import BaseView
+class DemoView(BaseView):
+    async def detail(self, _id: int):
+        data = await g.session.query(...)
+        return self.message(data=data)
 ```
 2. 注入方式
  ```python
-from db.backends.mysql import async_session
-@api_description(summary="用户查询")
-async def get(self, _id, session: async_session):
-    await session.add()
+from db.backends.database import session_type
+from core.base_view import BaseView
+class DemoView(BaseView):
+    async def detail(self, _id: int, session: session_type):
+        data = await session.query(...)
+        return self.message(data=data)
 ```
 3. 手动创建方式
+
 ```python
-from db.backends.mysql import sessionmanager
-@api_description(summary="用户查询")
-async def get(self, _id):
-    async with sessionmanager.session() as session:
-        await session.add
+from db.backends.database import sessionmanager
+
+from core.base_view import BaseView
+
+
+class DemoView(BaseView):
+    async def detail(self, _id: int):
+        async with sessionmanager.session() as session:
+            await session.add
+
 
 ```
+
+**注意⚠️：** 
+- 全局变量方式使用session(g.session, g.session_sync),
+- 需配置 CREATE_DEPENDS_SESSION=1，否则需要每个接口声明 depend_session=True
+- config/settings.py CREATE_DEPENDS_SESSION=1
+- 或者每个接口声明
+```python
+@api_description(summary="用户查询",  depend_session=True)
+async def get(self, _id): 
+   ...
+```
+
 ## 全局g变量
 - 内置 
 1. g.request,
 2. g.user, g.user_id, 
 3. g.session(异步session), 
+4. g.session_sync(同步session)
 4. g.extra_data(字典)
 
 ```python
 from core.context import g
 from db.models.user import User
 from core.decorator import api_description
+from core.base_view import BaseView
 
-@api_description(summary="用户查询",  depend_async_session=True)
-async def get(self, _id):
-    # 获取request对象，不依赖手动注入
-    g.request
-    # 获取user，需要在视图类中声明 authentication_classes = [TokenAuthentication, ]
-    g.user, g.user_id
-    # 获取 异步session, 需要在视图函数中声明 depend_async_session = True
-    await g.session.get(User, _id)
-    # 其他参数
-    g.extra_data['name'] = 1
-    g.extra_data['name']
+class DemoView(BaseView):
+    @api_description(summary="用户查询",  depend_session=True)
+    async def get(self, _id):
+        # 获取request对象，不依赖手动注入
+        g.request
+        # 获取user，需要在视图类中声明 authentication_classes = [TokenAuthentication, ]
+        g.user, g.user_id
+        # 获取 异步session, 需要修改配置 config/settings CREATE_DEPENDS_SESSION=1 或者视图函数中声明 depend_async_session = True
+        await g.session.get(User, _id)
+        # 其他参数
+        g.extra_data['name'] = 1
+        g.extra_data['name']
 ```
 
 ## 仿Django ORM 操作

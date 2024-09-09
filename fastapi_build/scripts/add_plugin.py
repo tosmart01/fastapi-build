@@ -61,7 +61,7 @@ def main(plugin_name: str):
         remove_header(target_dir / 'dao')
     if plugin_name == 'db[mysql]' or ALL:
         (target_dir / 'db' / 'models').mkdir(parents=True, exist_ok=True)
-        shutil.copy(package_dir / 'db' / 'backends' / 'mysql.py', target_dir / 'db' / 'backends' / 'mysql.py')
+        shutil.copy(package_dir / 'db' / 'backends' / 'database.py', target_dir / 'db' / 'backends' / 'database.py')
         copy_list(package_dir / 'db' / 'models', target_dir / 'db' / 'models')
         copy_dao(package_dir, target_dir)
         remove_header(target_dir / 'db')

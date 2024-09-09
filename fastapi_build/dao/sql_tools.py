@@ -16,7 +16,6 @@ try:
 except:
     from sqlalchemy import Select, Result, Row
 
-from db.backends.mysql import session, async_session_maker
 
 
 class QueryConverter:
@@ -187,7 +186,7 @@ class QueryConverter:
             print(fetchall(query, to_dict=True))
             [{'username': 'John', 'email': '<EMAIL>'}]
         """
-        result = session.execute(query)
+        result = g.session_sync.execute(query)
         result = result.all()
         return self.convert_all(result, to_dict, value_list)
 
@@ -233,7 +232,7 @@ class QueryConverter:
             result
             {'username': 'John', 'email': '<EMAIL>'}
         """
-        result = session.execute(query)
+        result = g.session_sync.execute(query)
         row = result.first()
         return self.convert_one(row, to_dict)
 
@@ -277,7 +276,7 @@ class QueryConverter:
         """
         subquery = query.subquery()
         q = select(func.count(text('1'))).select_from(subquery)
-        return session.execute(q).first()[0]
+        return g.session_sync.execute(q).first()[0]
 
     async def a_fetch_count(self, query: Select, _session: AsyncSession = None) -> int:
         """

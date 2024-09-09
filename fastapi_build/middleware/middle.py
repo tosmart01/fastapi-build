@@ -136,8 +136,6 @@ def register_middleware(app: FastAPI):
             logger.info(
                 f"{method}: {url}, 用时: {duration:.4f}s, Query Params: {query_params},"
                 f" Body: {request_body.decode()} IP: {client_ip}, Agent: {client_agent}. ")
-            # from db.backends.mysql import session
-            # session.remove()
         except Exception:
             logger.exception("日志记录异常")
         return response

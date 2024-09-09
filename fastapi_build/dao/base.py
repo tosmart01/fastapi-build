@@ -6,8 +6,7 @@
 from typing import Union, List, Dict, Any, Optional, TypeVar, Type
 
 from sqlalchemy import desc, asc, select, func, update, delete, Row
-from sqlalchemy.orm import Session
-from sqlalchemy.ext.asyncio.session import AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from core.context import g
 from .sql_tools import database
@@ -22,8 +21,6 @@ class BaseDao:
     """
 
     model_cls: Type[T] = None
-    session: Session = None
-    async_session_maker: async_sessionmaker[AsyncSession] = None
     base_filter = ()
 
     def get_query(self, query_field: Optional[Union[List, tuple]] = None):
@@ -32,9 +29,9 @@ class BaseDao:
 
         :param query_field: Fields to be selected in the query        :return:  object
         """
-        query = self.session.query(self.model_cls).filter(*self.base_filter)
+        query = g.session_sync.query(self.model_cls).filter(*self.base_filter)
         if query_field:
-            query = self.session.query(*query_field)
+            query = g.session_sync.query(*query_field)
         return query
 
     def get(
@@ -222,12 +219,12 @@ class BaseDao:
         obj = model(**properties)
 
         try:
-            self.session.add(obj)
-            self.session.flush()
+            g.session_sync.add(obj)
+            g.session_sync.flush()
             if commit:
-                self.session.commit()
+                g.session_sync.commit()
         except Exception as ex:  # pragma: no cover
-            self.session.rollback()
+            g.session_sync.rollback()
             raise ex
         return obj
 
@@ -251,9 +248,9 @@ class BaseDao:
                 properties, synchronize_session=False
             )
             if is_commit:
-                self.session.commit()
+                g.session_sync.commit()
         except Exception as ex:
-            self.session.rollback()
+            g.session_sync.rollback()
             raise ex
         return modify_count
 
@@ -277,11 +274,11 @@ class BaseDao:
         for key, value in properties.items():
             setattr(model, key, value)
         try:
-            self.session.merge(model)
+            g.session_sync.merge(model)
             if commit:
-                self.session.commit()
+                g.session_sync.commit()
         except Exception as ex:  # pragma: no cover
-            self.session.rollback()
+            g.session_sync.rollback()
             raise ex
         return model
 
@@ -312,10 +309,10 @@ class BaseDao:
         modify_count = query.update(properties)
         if is_commit:
             try:
-                self.session.flush()
-                self.session.commit()
+                g.session_sync.flush()
+                g.session_sync.commit()
             except Exception as ex:
-                self.session.rollback()
+                g.session_sync.rollback()
                 raise ex
         return modify_count
 
@@ -343,10 +340,10 @@ class BaseDao:
         )
         if commit:
             try:
-                self.session.flush()
-                self.session.commit()
+                g.session_sync.flush()
+                g.session_sync.commit()
             except Exception as ex:
-                self.session.rollback()
+                g.session_sync.rollback()
                 raise ex
         return modify_count
 
@@ -360,11 +357,11 @@ class BaseDao:
         :raises: Exception if delete fails
         """
         try:
-            self.session.delete(model)
+            g.session_sync.delete(model)
             if commit:
-                self.session.commit()
+                g.session_sync.commit()
         except Exception as ex:  # pragma: no cover
-            self.session.rollback()
+            g.session_sync.rollback()
             raise ex
         return model
 
@@ -385,7 +382,7 @@ class BaseDao:
         :return: Number of records deleted
         :raises: Exception if delete fails
         """
-        query = self.session.query(self.model_cls)
+        query = g.session_sync.query(self.model_cls)
         id_col = getattr(self.model_cls, id_field or "id", None)
         try:
             query = query.filter(id_col == model_id)
@@ -393,9 +390,9 @@ class BaseDao:
                 raise NotFoundError()
             modify_count = query.delete()
             if is_commit:
-                self.session.commit()
+                g.session_sync.commit()
         except Exception as ex:
-            self.session.rollback()
+            g.session_sync.rollback()
             raise ex
         return modify_count
 
@@ -414,16 +411,16 @@ class BaseDao:
         :return: Number of records deleted
         :raises: Exception if delete fails
         """
-        query = self.session.query(self.model_cls)
+        query = g.session_sync.query(self.model_cls)
         id_col = getattr(self.model_cls, id_field or "id", None)
         try:
             modify_count = query.filter(id_col.in_(model_ids)).delete(
                 synchronize_session=False
             )
             if is_commit:
-                self.session.commit()
+                g.session_sync.commit()
         except Exception as ex:
-            self.session.rollback()
+            g.session_sync.rollback()
             raise ex
         return modify_count
 
@@ -456,9 +453,9 @@ class BaseDao:
                 {delete_field: 1}
             )
             if is_commit:
-                self.session.commit()
+                g.session_sync.commit()
         except Exception as ex:
-            self.session.rollback()
+            g.session_sync.rollback()
             raise ex
         return modify_count
 
@@ -487,9 +484,9 @@ class BaseDao:
                 synchronize_session=False
             )
             if is_commit:
-                self.session.commit()
+                g.session_sync.commit()
         except Exception as ex:
-            self.session.rollback()
+            g.session_sync.rollback()
             raise ex
         return modify_count
 
@@ -677,7 +674,7 @@ class BaseDao:
             if is_commit:
                 await session.commit()
         except Exception as ex:
-            self.session.rollback()
+            await session.rollback()
             raise ex
         else:
             rowcount: int = result.rowcount
@@ -744,7 +741,7 @@ class BaseDao:
             if commit:
                 await session.commit()
         except Exception as ex:
-            self.session.rollback()
+            await g.session.rollback()
             raise ex
         else:
             return result.rowcount
@@ -779,7 +776,7 @@ class BaseDao:
             if commit:
                 await session.commit()
         except Exception as ex:
-            self.session.rollback()
+            await g.session.rollback()
             raise ex
         else:
             return result.rowcount

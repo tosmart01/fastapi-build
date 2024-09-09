@@ -65,37 +65,28 @@ def register_logger():
         os.path.join(LOG_DIR, prefix, "info_{time:%Y-%m-%d}.log"),
         level="INFO",
         colorize=False,
-        rotation="1 days",
+        rotation="00:00",
         retention="7 days",
         backtrace=False,
         diagnose=False,
         encoding="utf-8",
-        format="{time} {level} {message} | PID:{process} | TID: {thread}",
+        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {module}.{function}:{line} {message} | PID:{process} | TID: {thread}",
         catch=False,
+        enqueue=True
     )
     logger.add(
         os.path.join(LOG_DIR, prefix, "error_{time:%Y-%m-%d}.log"),
         level="ERROR",
         colorize=False,
-        rotation="1 days",
+        rotation="00:00",
         retention="15 days",
         backtrace=False,
         diagnose=False,
         encoding="utf-8",
-        format="{time} {level} {message} | PID:{process} | TID: {thread}",
+        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {module}.{function}:{line} {message} | PID:{process} | TID: {thread}",
         catch=False,
+        enqueue=True
     )
-    # logger.add(
-    #     os.path.join(LOG_DIR, prefix, "error_detail_{time:%Y-%m-%d}.log"),
-    #     level="ERROR",
-    #     colorize=False,
-    #     rotation="1 days",
-    #     retention="3 days",
-    #     backtrace=True,
-    #     diagnose=True,
-    #     encoding="utf-8",
-    #     format="{time} {level} {message} | PID:{process} | TID: {thread}",
-    # )
 
 
 register_logger()

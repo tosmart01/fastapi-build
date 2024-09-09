@@ -8,6 +8,7 @@ from typing import Union, Type
 from fastapi import APIRouter, Depends
 
 from auth.base_authentication import BaseTokenAuthentication
+from config.settings import CREATE_DEPENDS_SESSION
 from core.context import g
 
 
@@ -47,14 +48,17 @@ class BaseView:
                               self.permissions_classes)
         dependencies = [Depends(_(name='')(method)) for _ in authentication_classes] + \
                        [Depends(_(method)) for _ in permission_classes]
-        depend_async_session: bool = extra_params.pop("depend_async_session", False)
-        if depend_async_session:
+        depend_session: bool = extra_params.pop("depend_session", CREATE_DEPENDS_SESSION)
+        if depend_session:
             try:
-                from db.backends.mysql import get_db
+                from db.backends.database import get_db, get_db_sync
             except ImportError:
                 pass
             else:
-                dependencies.insert(0, Depends(get_db))
+                if inspect.iscoroutinefunction(method):
+                    dependencies.insert(0, Depends(get_db))
+                else:
+                    dependencies.insert(0, Depends(get_db_sync))
         return dependencies
 
     def register_routes(self):
