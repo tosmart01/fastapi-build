@@ -72,6 +72,9 @@ $ fbuild startapp myapp
 $ cd myproject/src
 # 当前支持 插件列表 db, db[mysql], db[redis], db[es], migrate, all
 $ fbuild add_plugin plugin_name
+$ fbuild add_plugin 'db[mysql]'
+$ fbuild add_plugin 'db[es]'
+$ fbuild add_plugin all
 ```
 
 #### 可用插件
