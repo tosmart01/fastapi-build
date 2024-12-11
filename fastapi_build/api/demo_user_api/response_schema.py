@@ -15,14 +15,3 @@ class UserItemResponse(CustomModel):
     email: Optional[str]
     creator_id: Optional[int]
     created_time: Union[datetime, None]
-
-    class Config:
-        orm_mode = True
-
-
-class UserListResponse(CustomModel):
-    total: int = 0
-    results: list[UserItemResponse] = []
-
-    class Config:
-        orm_mode = True

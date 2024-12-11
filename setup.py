@@ -28,11 +28,11 @@ clean_pyc_and_cache()
 
 setup(
     name="fastapi_build",
-    version="0.4.0",
+    version="1.0.0",
     packages=find_packages(),
     url="https://github.com/tosmart01/fastapi-build",
     include_package_data=True,
-    exclude_package_data={'': ['*.pyc', '__pycache__/*']},
+    exclude_package_data={'': ['*.pyc', '__pycache__/*', '*.db']},
     install_requires=parse_requirements('requirements.txt'),
     entry_points={
         "console_scripts": [

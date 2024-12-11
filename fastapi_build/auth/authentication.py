@@ -5,7 +5,7 @@
 from fastapi import Request
 
 from auth.base_authentication import BaseTokenAuthentication
-from db.models.user import User
+from models import User
 
 
 class TokenAuthentication(BaseTokenAuthentication):

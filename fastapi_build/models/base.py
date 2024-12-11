@@ -6,8 +6,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import DeclarativeMeta
 from sqlalchemy import Column, Boolean
 
-from db.backends.database import engine
-from dao.base import BaseDao
+from db.database import engine
+from dao import BaseDao
 
 
 class CustomDeclarativeMeta(DeclarativeMeta):
@@ -29,7 +29,7 @@ class BaseModel(Base):
 
     __abstract__ = True
     objects = BaseDao
-    is_delete = Column(Boolean, nullable=False, default=False, comment="是否已删除")
+    is_delete = Column(Boolean, nullable=False, default=False)
 
     def to_dict(self, keys=None):
         if keys:

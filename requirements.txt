@@ -9,7 +9,5 @@ pytz
 SQLAlchemy
 typing_extensions
 uvicorn
-passlib
-bcrypt
 click
 

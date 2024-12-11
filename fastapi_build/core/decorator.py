@@ -7,12 +7,13 @@ from fastapi.routing import *
 
 from auth.base_authentication import BaseAuthentication
 from auth.base_permission import BasePermission
+from config.settings import CREATE_DEPENDS_SESSION
 
 
 def api_description(
         authentication_classes: List[Type[BaseAuthentication]] = None,
         permission_classes: List[Type[BasePermission]] = None,
-        depend_session: bool = False,
+        depend_session: bool = CREATE_DEPENDS_SESSION,
         response_model: Any = Default(None),
         status_code: Optional[int] = None,
         tags: Optional[List[Union[str, Enum]]] = None,

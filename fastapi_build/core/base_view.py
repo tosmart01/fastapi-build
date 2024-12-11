@@ -51,14 +51,14 @@ class BaseView:
         depend_session: bool = extra_params.pop("depend_session", CREATE_DEPENDS_SESSION)
         if depend_session:
             try:
-                from db.backends.database import get_db, get_db_sync
+                from db.database import sessionmanager
             except ImportError:
                 pass
             else:
                 if inspect.iscoroutinefunction(method):
-                    dependencies.insert(0, Depends(get_db))
+                    dependencies.insert(0, Depends(sessionmanager.get_db))
                 else:
-                    dependencies.insert(0, Depends(get_db_sync))
+                    dependencies.insert(0, Depends(sessionmanager.get_db_sync))
         return dependencies
 
     def register_routes(self):
@@ -92,7 +92,7 @@ class BaseView:
         return inspect.getmodule(subclass_method) != inspect.getmodule(base_method)
 
     @staticmethod
-    def message(code: int = 0, message: str = 'success', data: Union[dict, None, list, str] = None):
+    def response(code: int = 0, message: str = 'success', data: Union[dict, None, list, str] = None):
         return {
             "code": code,
             "message": message,

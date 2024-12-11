@@ -2,13 +2,11 @@
 # @Time : 2024/5/27 11:39
 # @Author : PinBar
 # @File : sql_tools.py
-from typing import Union
+from typing import Union, Any
 
 from sqlalchemy import select, func, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Query
-
-from core.context import g
 
 try:
     from sqlalchemy.engine import Row, Result
@@ -16,6 +14,7 @@ try:
 except:
     from sqlalchemy import Select, Result, Row
 
+from core.context import g
 
 
 class QueryConverter:
@@ -89,7 +88,7 @@ class QueryConverter:
         Returns:
             bool: True if the object is an instance of a SQLAlchemy model, False otherwise.
         """
-        return hasattr(obj, '__table__')
+        return hasattr(obj, "__table__")
 
     async def async_execute(self, session: AsyncSession, query: select) -> Result:
         """
@@ -108,7 +107,9 @@ class QueryConverter:
             result = await g.session.execute(query)
         return result
 
-    def convert_all(self, result: list[Row], to_dict: bool = False, value_list: bool = False):
+    def convert_all(
+            self, result: list[Row], to_dict: bool = False, value_list: bool = False
+    ):
         """
         Convert a list of SQLAlchemy Row objects to a desired format (list of dictionaries or list of lists).
 
@@ -137,7 +138,11 @@ class QueryConverter:
                 data = row._asdict() if not is_model_instance else row.to_dict()
                 objects.append(data)
             elif value_list:
-                data = list(row._asdict().values()) if not is_model_instance else list(row.to_dict().values())
+                data = (
+                    list(row._asdict().values())
+                    if not is_model_instance
+                    else list(row.to_dict().values())
+                )
                 objects.append(data)
             else:
                 objects.append(row)
@@ -168,8 +173,9 @@ class QueryConverter:
             return row._asdict() if not is_model_instance else row.to_dict()
         return row
 
-    def fetchall(self, query: Select, to_dict: bool = False, value_list: bool = False) -> Union[
-        list[Row], list[dict], list[list]]:
+    def fetchall(
+            self, query: Select, to_dict: bool = False, value_list: bool = False
+    ) -> Union[list[Row], list[dict], list[list]]:
         """
         Fetch all results of a SQLAlchemy Select query and convert them to the desired format.
 
@@ -190,9 +196,13 @@ class QueryConverter:
         result = result.all()
         return self.convert_all(result, to_dict, value_list)
 
-    async def a_fetchall(self, query: Select, to_dict: bool = False, value_list: bool = False,
-                         _session: AsyncSession = None) -> Union[
-        list[Row], list[dict], list[list]]:
+    async def a_fetchall(
+            self,
+            query: Select,
+            to_dict: bool = False,
+            value_list: bool = False,
+            _session: AsyncSession = None,
+    ) -> Union[list[Row], list[dict], list[list]]:
         """
         Asynchronously fetch all results of a SQLAlchemy Select query and convert them to the desired format.
 
@@ -215,6 +225,14 @@ class QueryConverter:
         result = result.all()
         return self.convert_all(result, to_dict, value_list)
 
+    def scalar(self, query: Union[Select]) -> Any:
+        result = g.session_sync.execute(query).scalar()
+        return result
+
+    async def ascalar(self, query: Union[Select]) -> Any:
+        result = await g.session.execute(query)
+        return result.scalar()
+
     def fetchone(self, query: Select, to_dict: bool = False) -> Union[Row, dict]:
         """
         Fetch the first result of a SQLAlchemy Select query and convert it to the desired format.
@@ -236,7 +254,9 @@ class QueryConverter:
         row = result.first()
         return self.convert_one(row, to_dict)
 
-    async def a_fetchone(self, query: Select, to_dict: bool = False, _session: AsyncSession = None) -> Union[Row, dict]:
+    async def a_fetchone(
+            self, query: Select, to_dict: bool = False, _session: AsyncSession = None
+    ) -> Union[Row, dict]:
         """
         Asynchronously fetch the first result of a SQLAlchemy Select query and convert it to the desired format.
 
@@ -275,7 +295,7 @@ class QueryConverter:
             10
         """
         subquery = query.subquery()
-        q = select(func.count(text('1'))).select_from(subquery)
+        q = select(func.count(text("1"))).select_from(subquery)
         return g.session_sync.execute(q).first()[0]
 
     async def a_fetch_count(self, query: Select, _session: AsyncSession = None) -> int:
@@ -296,11 +316,13 @@ class QueryConverter:
             10
         """
         subquery = query.subquery()
-        q = select(func.count(text('1'))).select_from(subquery)
+        q = select(func.count(text("1"))).select_from(subquery)
         result = await self.async_execute(_session, q)
         return result.first()[0]
 
-    def pagination(self, query: Union[Select, Query], page: int = 1, per_page: int = 10) -> tuple[int, list[dict]]:
+    def pagination(
+            self, query: Union[Select, Query], page: int = 1, per_page: int = 10
+    ) -> tuple[int, list[dict]]:
         """
         Perform pagination on a SQLAlchemy Select or Query object.
 
@@ -333,8 +355,13 @@ class QueryConverter:
             result = self.query_to_dict_list(query)
         return total, result
 
-    async def a_pagination(self, query: Select, page: int = 1, per_page: int = 10, _session: AsyncSession = None) -> \
-            tuple[int, list[dict]]:
+    async def a_pagination(
+            self,
+            query: Select,
+            page: int = 1,
+            per_page: int = 10,
+            _session: AsyncSession = None,
+    ) -> tuple[int, list[dict]]:
         """
         Perform asynchronous pagination on a SQLAlchemy Select object.
 
@@ -364,6 +391,24 @@ class QueryConverter:
         paginate = query.offset(offset).limit(per_page)
         result = await self.a_fetchall(paginate, to_dict=True, _session=_session)
         return total, result
+
+    async def aexecute_update(self, stmt: Select) -> int:
+        try:
+            res = await g.session.execute(stmt)
+            await g.session.commit()
+        except Exception:
+            await g.session.rollback()
+            raise
+        return res.rowcount
+
+    def execute_update(self, stmt: Select) -> int:
+        try:
+            res = g.session_sync.execute(stmt)
+            g.session_sync.commit()
+        except Exception:
+            g.session_sync.rollback()
+            raise
+        return res.rowcount
 
 
 database = QueryConverter()

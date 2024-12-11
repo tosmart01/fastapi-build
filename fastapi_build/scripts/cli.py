@@ -4,9 +4,12 @@
 # @File : cli.py
 import click
 from . import startproject, startapp, add_plugin, migrate
+from .. import __version__
+
+# 自定义帮助命令类以保持命令的注册顺序并支持样式
+import click
 
 
-# 自定义帮助命令类以保持命令的注册顺序
 class OrderedGroup(click.Group):
     def __init__(self, *args, **kwargs):
         self.commands = []
@@ -23,10 +26,24 @@ class OrderedGroup(click.Group):
 
         return decorator
 
+    def format_commands(self, ctx, formatter):
+        # Calls the parent class's format_commands to ensure commands are listed
+        rows = []
+        for cmd_name in self.list_commands(ctx):
+            cmd = self.get_command(ctx, cmd_name)
+            # Add color to command names
+            styled_name = click.style(cmd_name, fg="cyan")
+            rows.append((styled_name, cmd.get_short_help_str()))
+        if rows:
+            with formatter.section('Commands'):
+                formatter.write_dl(rows)
+
 
 # 使用自定义的 OrderedGroup
 @click.group(cls=OrderedGroup, context_settings=dict(help_option_names=['-h', '--help'], max_content_width=120))
+@click.version_option(version=__version__, prog_name=click.style('Fastapi-Build', fg='blue', bold=True))
 def cli():
+    """Fastapi-Build is a CLI tool to help manage FastAPI projects."""
     pass
 
 
@@ -36,6 +53,3 @@ cli.add_command(add_plugin.main, name="add_plugin")
 cli.add_command(migrate.makemigrations, name="makemigrations")
 cli.add_command(migrate.showmigrations, name="showmigrations")
 cli.add_command(migrate.migrate, name="migrate")
-
-if __name__ == "__main__":
-    cli()

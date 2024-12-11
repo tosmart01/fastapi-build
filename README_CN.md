@@ -1,43 +1,42 @@
-## Table of Contents
-Read this in [中文(Chinese)](README_CN.md)
+## 目录
 
-## Introduction
+## 简介
 
-`fastapi-build` is a powerful CLI tool designed for scaffolding FastAPI projects. Inspired by Django's administrative features, it allows developers to:
+`fastapi-build` 是一个强大的 CLI 工具，用于搭建 FastAPI 项目脚手架。受 Django 管理功能的启发，它允许开发者：
 
-- Quickly set up the basic structure and dependencies of a FastAPI application via the command line.
-- Provide support for view classes (Django-style).
-- Operate with a Django ORM-like style (based on SQLAlchemy).
-- Implement authentication without dependency injection, similar to Django REST framework, with declarative `authentication_classes = []`.
-- Utilize a global asynchronous SQLAlchemy session object, e.g., `await g.session.get(Model, id)`.
-- Access Flask-like `g` variables, such as `g.request` and `g.user`.
-- Return human-readable Pydantic validation errors.
+- 命令行快速设置 FastAPI 应用程序的基本结构和依赖项。
+- 提供视图类支持(仿django风格)
+- 仿Django ORM风格操作 (基于sqlalchemy)
+- 不依赖注入的身份验证，类似djangorestframework 声明式, authentication_classes = []
+- 全局的异步sqlalchemy session 对象，await g.session.get(Model, id)
+- 仿flask的g变量，g.request, g.user
+- 人类可读的pydantic 异常返回
 
-## Installation
+## 安装
 
-Prerequisite： python >=3.9
+必要条件： python >=3.9
 
 ```shell
 $ pip install fastapi-build --index-url=https://pypi.org/sample
 ```
 
-## Quick Start
+## 快速开始
 
-### Create a Project with Example APIs
-- Create a project via the command line:
+### 创建带api示例的项目
+- 命令行创建项目
 ```shell
 fbuild startproject --example-api --all-plugin demo && cd demo/src
-# Create example API tables
+# 创建示例api表
 fbuild makemigrations
 fbuild migrate
 ```
 
-- Run the project
+- 运行项目
 ```shell
 python server.py
 ```
 
-- Example Route
+- 样例路由
 ```python
 # api/demo_user_api/urls.py
 from . import APP_NAME
@@ -49,7 +48,7 @@ urlpatterns = [
 ]
 
 ```
-- Example API Interface
+- 样例接口 
 ```python
 from fastapi import Query, Body
 
@@ -123,14 +122,14 @@ class DemoView(BaseView):
 
 ```
 
-## Core Features
-### Global `g` Variable
-- Built-in 
+## 核心功能
+### 全局g变量
+- 内置 
 1. g.request,
 2. g.user, g.user_id, 
-3. g.session(async session), 
-4. g.session_sync(sync session)
-4. g.extra_data(dict)
+3. g.session(异步session), 
+4. g.session_sync(同步session)
+4. g.extra_data(字典)
 
 ```python
 from core.context import g
@@ -140,109 +139,100 @@ from core.base_view import BaseView
 
 
 class DemoView(BaseView):
-    @api_description(summary="User query")
+    @api_description(summary="用户查询", depend_session=True)
     async def get(self, _id):
-        # # Get the request object without manual injection
+        # 获取request对象，不依赖手动注入
         g.request
-        # Get the user, requires declaring `authentication_classes = [TokenAuthentication]` in the view class
+        # 获取user，需要在视图类中声明 authentication_classes = [TokenAuthentication, ]
         g.user, g.user_id
-        # Get the asynchronous session, requires modifying the configuration `config/settings CREATE_DEPENDS_SESSION=1` or declaring `depend_async_session = True` in the view function
+        # 获取 异步session, 需要修改配置 config/settings CREATE_DEPENDS_SESSION=1 或者视图函数中声明 depend_async_session = True
         await g.session.get(User, _id)
-        # Other parameters
+        # 其他参数
         g.extra_data['name'] = 1
         g.extra_data['name']
 ```
 
-### Django-like ORM Operations
+### 仿Django ORM 操作
 
-This project implements Django-like functionality based on SQLAlchemy, offering convenient asynchronous and synchronous APIs. It supports common database operations such as create, query, update, delete, and also advanced features like soft delete, pagination, and aggregation.
+本项目基于 SQLAlchemy 实现了类似于 Django ORM 的功能，提供了便捷的异步和同步 API，支持常见的数据库操作，如创建、查询、更新、删除等，同时支持软删除、分页、聚合等高级功能。<br>
 
-**Core Features**
+**核心功能**
 
-- Synchronous and Asynchronous Support: The API is compatible with both synchronous and asynchronous operations, making it suitable for various use cases.
-- Rich Querying Capabilities: Supports conditional filtering, sorting, pagination, aggregation, and more.
-- Create, Update, Delete Operations: Convenient interfaces for object creation, updates, and deletions.
-- Soft Delete Support: Easily implement logical deletes using soft delete markers.
-- Django-style API: The interface design is intended to closely follow Django's ORM usage patterns.
-
-**Common API List**
-
-- Create: `create()` / `a_create()`
-- Query a single object: `get()` / `aget()` / `first()` / `afirst()`
-- Query multiple records: `filter()` / `order_by()` / `values()` / `avalues()`
-- Update: `update()` / `aupdate()`
-- Delete: `delete()` / `adelete()` / `soft_delete()` / `asoft_delete()`
-- Pagination: `pagination()` / `a_pagination()`
-- Aggregation: `aggregate()`
-- Check if record exists: `exists()` / `aexists()`
+- 同步和异步支持：API 兼容同步和异步操作，方便在不同场景下使用。
+- 丰富的查询功能：支持条件过滤、排序、分页、聚合等。
+- 增删改操作：便捷的对象创建、更新和删除接口。
+- 软删除支持：通过软删除标记轻松实现逻辑删除。
+- Django 风格 API：接口设计上尽量贴近 Django 的 ORM 使用习惯。
+- 
+**常用 API 列表**
+- 创建：create() / a_create()
+- 查询单个对象：get() / aget() / first() / afirst()
+- 查询多条记录：filter() / order_by() / values() / avalues()
+- 更新：update() / aupdate()
+- 删除：delete() / adelete() / soft_delete() / asoft_delete()
+- 分页：pagination() / a_pagination()
+- 聚合：aggregate()
+- 判断记录存在：exists() / aexists()
  
-**Example**
+**示例**
 ```python
 from models.base import BaseModel
+
 
 class User(BaseModel):
     __tablename__ = 'user'
     username = Column(String(32))
-    # other columns ...
+    # you column ...
 
-# Query a single object
+
 User.objects.get(User.username=="")
 await User.objects.aget(User.username=="")
 
-# Create an object
 User.objects.create()
 await User.objects.a_create()
 
-# Update an object by ID
 User.objects.update_by_id()
 await User.objects.a_update_by_id()
 
-# Delete an object by ID
 User.objects.delete_by_id()
 await User.objects.a_delete_by_id()
 
-# Query multiple records with filtering, ordering, and selecting specific values
-User.objects.filter(User.id >= 10, username="test").order_by(User.id.desc()).values(User.username)
-await User.objects.filter(User.id >= 10, username="test").order_by(User.id.desc()).avalues(User.username)
+User.objects.filter(User.id >=10, username="test").order_by(User.id.desc()).values(User.username)
+await User.objects.filter(User.id >=10, username="test").order_by(User.id.desc()).avalues(User.username)
 
-# Update multiple records
-User.objects.filter(User.id > 10).update(username="test")
-await User.objects.filter(User.id > 10).aupdate(username="test")
+User.objects.filter(User.id>10).update(username="test")
+await User.objects.filter(User.id>10).aupdate(username="test")
 
-# Delete multiple records
-User.objects.filter(User.id > 10).delete(username="test")
-await User.objects.filter(User.id > 10).adelete(username="test")
+User.objects.filter(User.id>10).delete(username="test")
+await User.objects.filter(User.id>10).adelete(username="test")
 
-# Fetch the first record
 User.objects.filter(User.id >= 10).first()
 await User.objects.filter(User.id >= 10).afirst()
 
-# Fetch all records
 User.objects.filter(User.id >= 10).all()
 await User.objects.filter(User.id >= 10).a_all()
 
-# Get the last record
 User.objects.last()
 await User.objects.alast()
 
-# Select specific columns with a limit and filtering
 User.objects.with_columns(User.id, User.username).filter(User.username.like(f"%test%")).limit(10).values_list('username', flat=True)
 await User.objects.with_columns(User.id, User.username).filter(User.username.like(f"%test%")).limit(10).avalues_list('username', flat=True)
 
-# ... other operations
+# ...等其他操作
+
 ```
 
 
-### Class-Based Views
+### 基于类的视图
 
-- `get`: GET request, performs a query without an ID in the URL path.
-- `detail`: GET request, queries based on the ID in the URL path.
-- `post`: POST request, used for form submissions.
-- `query_post`: POST request, used for complex parameter queries with a POST method.
-- `put`: PUT request, updates a resource based on the ID in the URL path.
-- `multi_put`: PUT request, performs a bulk update with a request body.
-- `delete`: DELETE request, deletes a resource based on the ID in the URL path.
-- `multi_delete`: DELETE request, performs a bulk delete with a request body.
+- get, get请求，get查询,不带路径id
+- detail, get请求,根据路径id查询
+- post, post请求，表单提交
+- query_post, post请求，用于复杂参数的post方式查询
+- put, put请求，根据路径id的表单更新
+- multi_put, put请求，带请求体批量更新
+- delete, delete请求, 根据路径id的删除请求
+- multi_delete, delete请求，带请求体的批量删除
 
 ```python
 class DemoView():
@@ -271,8 +261,8 @@ class DemoView():
         raise ImportError("Not implemented")
 ```
 
-### Globally Accessible Synchronous and Asynchronous Sessions
-- **Synchronous session**
+### 可全局访问的同步异步session
+- 同步 session
 ```python
 from core.context import g
 g.session_sync.query()
@@ -280,8 +270,9 @@ g.session_sync.add()
 ...
 
 ```
-- Asynchronous session
-1. Non-injection method (Recommended)
+- 异步session
+1. 非注入方式(推荐)
+
 ```python
 from core.context import g
 from core.base_view import BaseView
@@ -292,7 +283,7 @@ class DemoView(BaseView):
         data = await g.session.query(...)
         return self.response(data=data)
 ```
-2. Injection method
+2. 注入方式
 
  ```python
 from db.database import session_type
@@ -304,7 +295,7 @@ class DemoView(BaseView):
         data = await session.query(...)
         return self.response(data=data)
 ```
-3. Manual creation method
+3. 手动创建方式
 
 ```python
 from db.database import sessionmanager
@@ -320,20 +311,19 @@ class DemoView(BaseView):
 
 ```
 
-**Note⚠️：** 
-- To use the global session variables (g.session, g.session_sync), you must configure CREATE_DEPENDS_SESSION=1, otherwise, each endpoint must declare depend_session=True in the view. The setting is located at: config/settings.py CREATE_DEPENDS_SESSION=1
-- Alternatively, you can declare depend_session=True for each endpoint:
+**注意⚠️：** 
+- 全局变量方式使用session(g.session, g.session_sync), 需配置 CREATE_DEPENDS_SESSION=1，否则需要每个接口声明 depend_session=True, 位置: config/settings.py CREATE_DEPENDS_SESSION=1
+- 或者每个接口声明
 ```python
-@api_description(summary="User Query",  depend_session=True)
+@api_description(summary="用户查询",  depend_session=True)
 async def get(self, _id): 
    ...
 ```
 
 
-### Declarative Authentication
-
-1. **Define the Authentication Class**
-   - **Both synchronous and asynchronous methods need to be implemented**
+### 声明式身份验证
+1. 定义身份验证类
+ - **需要实现同步异步两个方法**
 
 ```python
 from fastapi import Request
@@ -347,62 +337,62 @@ class TokenAuthentication(BaseTokenAuthentication):
     async def authenticate(self, request: Request):
         user_info = self.validate_token(request)
         user = await User.objects.aget_by_id(user_info['user_id'])
-        # Return the user, can be either a Pydantic or SQLAlchemy object
+        # 需要返回 user，可以是 pydantic 对象，可以是 sqlalchemy对象
         return user
 
     def authenticate_sync(self, request: Request):
         user_info = self.validate_token(request)
         user = User.objects.get_by_id(user_info['user_id'])
-        # Return the user, can be either a Pydantic or SQLAlchemy object
+        # 需要返回 user，可以是 pydantic 对象，可以是 sqlalchemy对象
         return user
 ```
-2. Declare in the View Class
-- If you need to set it globally, modify the authentication_classes in BaseView.
-- You can also specify the authentication class for each view function individually using @api_description(authentication_classes=[])
-- After authentication, you can access the user either directly in the view function or via the g variable.
+2. 视图类中声明
+- 如果需要全局设置，可以修改BaseView  authentication_classes
+- 可以为每个视图函数单独指定验证类, @api_description(authentication_classes=[])
+- 通过验证后可以在 视图函数或者g变量中访问 user
 ```python
 from core.context import g
 class DemoView(BaseView):
     authentication_classes = [TokenAuthentication, ]
 
-    @api_description(summary="User Detail", response_model=Res(UserItemResponse))
+    @api_description(summary="用户详情", response_model=Res(UserItemResponse))
     async def detail(self, _id: int):
         user = User.objects.aget(User.id == _id, raise_not_found=True)
         return self.message(data=user)
 
-    @api_description(summary="User Search", response_model=Res(UserListResponse), authentication_classes=[])
+    @api_description(summary="用户查询", response_model=Res(UserListResponse), authentication_classes=[])
     def get(self, query: UserQueryParams = Depends(UserQueryParams)):
-        self.request  # Access the request object directly via self
-        self.user     # Directly access the user object
-        g.user        # Alternatively, access user via the global g variable
+        self.request  # request对象直接通过self获取
+        self.user  # 直接获取user对象
+        g.user 
         total, users = User.objects.search(query)
         return self.message(data={'total': total, 'results': users}
 ```
 
-### Adding Plugins
-
+### 添加插件
 
 `fbuild add_plugin `
 
 ```shell
 $ cd myproject/src
-# Current supported plugin list: db, db[database], db[redis], db[es], migrate, all
+# 当前支持 插件列表 db, db[database], db[redis], db[es], migrate, all
 $ fbuild add_plugin plugin_name
 $ fbuild add_plugin 'db[database]'
 $ fbuild add_plugin 'db[es]'
 $ fbuild add_plugin all
 ```
 
-#### Available Plugins
-- **db**: Provides support for all databases.
-- **db[database]**: Provides support for a generic database.
-- **db[redis]**: Provides Redis database support.
-- **db[es]**: Provides Elasticsearch support.
-- **celery**: Provides support for the Celery task queue.
-- **migrate**: Provides Alembic migration support, with commands similar to Django's makemigrations and migrate.
-- **all**: Installs all available plugins.
+#### 可用插件
 
-#### Other Command Line Options
+- **db**: 提供所有数据库支持
+- **db[database]**: 提供 database 数据库支持
+- **db[redis]**: 提供 Redis 数据库支持
+- **db[es]**: 提供 Elasticsearch 支持
+- **celery**: 提供 Celery 任务队列支持
+- **migrate**: 提供alembic 迁移支持，命令仿照Django makemigrations migrate
+- **all**: 安装所有插件
+
+#### 其他命令行
 
 ```shell
 $ fbuild --help
@@ -419,76 +409,78 @@ Commands:
   showmigrations  Run the alembic history, like Django python manage.py showmigrations
   migrate         Run the alembic upgrade head, like Django python migrate
 
+
 ```
 
-### Middleware
+### 中间件
 
-The project includes built-in middleware for logging API information, tracking request durations, handling CORS (Cross-Origin Resource Sharing), and customizing error response structures.
+内置了接口信息打印，访问时长记录，跨域CORS，自定义错误返回结构等。
 
-- **src/middleware/middle.py**
+- src/middleware/middle.py
 
-### Configuration Files
+### 配置文件
 
-The project provides basic configurations for the database, timezone, log file paths, and more. During local development, you can override these settings using the `dev.py` file.
+提供了基础的数据库，时区，日志路径等配置,本地开发可以使用 dev.py 覆盖配置
 
-- **src/config/settings.py**
+- src/config/settings.py
 
-### Log Configuration
+### 日志配置
 
-**Using loguru to manage logs**
+**使用loguru管理日志**
 
 - src/common.log.py
 
-### Error Handling
-- Human-readable exception messages
+### 错误处理
+- 人类可读的异常信息
  
 ![](./docs/asset/img/error.jpg)
 
-- Custom API exceptions
+- 自定义接口异常
 ```python
 from exceptions.custom_exception import ParamsError
 from exceptions.http_status import HTTP_500_INTERNAL_SERVER_ERROR
 
 
-# Directly use in the API
+# 接口中直接使用
 async def post(request: Request):
     raise ParamsError(message="username must be string")
 
 
-# The response will be:
+# 将返回：
 # http_code: 400
 res: {"code": 400, "message": "username must be string"}
 
-# You can specify the http_code
+# 可指定 http_code
 ParamsError(message="username must be string", http_code=HTTP_500_INTERNAL_SERVER_ERROR)
 
-# You can also create custom error classes
+# 可自定义错误类
 from exceptions.base import ApiError
 
 
 class ValidatePhoneError(ApiError):
     default_code = ParamCheckError
-    default_message = "Please provide a valid phone number"
+    default_message = "请输出正确的手机号"
     default_http_code = HTTP_400_BAD_REQUEST
 
 ```
 
-### Start the Project
+### 启动项目
 
 ```shell
 cd src
 python server.py
 ```
 
-### Access the API Documentation
-- The API documentation is grouped by app name. You can add comments to the API names and parameters.
-- The response structure is {"code": 0, "data": [], "message": ""} once it's completed.
+### 访问接口文档
+
+- 根据app名称分组，接口名称及参数可添加注释，
+- 返回结构为 {"code": 0, "data": [], "message": ""} 制作完成
   ![apidocs2](./docs/asset/img/api_docs2.png)
   ![apidocs](./docs/asset/img/apidocs.png)
 
+### 项目结构
 
-### Project Structure
-An overview of the project structure generated by `fastapi-build`:
+由 `fastapi-build` 生成的项目结构概览。
 
 ```
 ├── README.md
@@ -555,16 +547,16 @@ An overview of the project structure generated by `fastapi-build`:
     └── server.py
 ```
 
-### Contributing Guidelines
+### 贡献指南
 
-Thank you for your interest in contributing to `fastapi-build`! Please follow the steps below to submit your code:
+感谢你对 `fastapi-build` 的贡献！请遵循以下步骤提交你的代码：
 
-1. Fork this repository
-2. Create your feature branch (`git checkout -b feature/fooBar`)
-3. Commit your changes (`git commit -am 'Add some fooBar'`)
-4. Push to the branch (`git push origin feature/fooBar`)
-5. Create a new Pull Request
+1. Fork 此仓库
+2. 创建你的特性分支 (`git checkout -b feature/fooBar`)
+3. 提交你的更改 (`git commit -am 'Add some fooBar'`)
+4. 推送到分支 (`git push origin feature/fooBar`)
+5. 创建一个新的 Pull Request
 
-### License
+### 许可证
 
-This project is licensed under the MIT License. Please see the LICENSE file for more details.
+此项目使用 MIT 许可证，详情请参阅 LICENSE 文件。
