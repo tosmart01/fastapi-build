@@ -6,7 +6,7 @@
 
 - 命令行快速设置 FastAPI 应用程序的基本结构和依赖项。
 - 提供视图类支持(仿django风格)
-- 仿Django ORM风格操作 (基于sqlalchemy)
+- 仿Django ORM风格操作(简化版本,功能有限,基于sqlalchemy)
 - 不依赖注入的身份验证，类似djangorestframework 声明式, authentication_classes = []
 - 全局的异步sqlalchemy session 对象，await g.session.get(Model, id)
 - 仿flask的g变量，g.request, g.user
