@@ -185,13 +185,13 @@ This project implements a simplified version of Django-like functionality using 
 from models.base import BaseModel
 
 class User(BaseModel):
-    __tablename__ = 'user'
+    __tablename__ = "user"
     username = Column(String(32))
     # other columns ...
 
 # Query a single object
-User.objects.get(User.username=="")
-await User.objects.aget(User.username=="")
+User.objects.get(User.username == "")
+await User.objects.aget(User.username == "")
 
 # Create an object
 User.objects.create()
@@ -206,8 +206,12 @@ User.objects.delete_by_id()
 await User.objects.a_delete_by_id()
 
 # Query multiple records with filtering, ordering, and selecting specific values
-User.objects.filter(User.id >= 10, username="test").order_by(User.id.desc()).values(User.username)
-await User.objects.filter(User.id >= 10, username="test").order_by(User.id.desc()).avalues(User.username)
+User.objects.filter(User.id >= 10, username="test").order_by(User.id.desc()).values(
+    User.username
+)
+await User.objects.filter(User.id >= 10, username="test").order_by(
+    User.id.desc()
+).avalues(User.username)
 
 # Update multiple records
 User.objects.filter(User.id > 10).update(username="test")
@@ -230,12 +234,57 @@ User.objects.last()
 await User.objects.alast()
 
 # Select specific columns with a limit and filtering
-User.objects.with_columns(User.id, User.username).filter(User.username.like(f"%test%")).limit(10).values_list('username', flat=True)
-await User.objects.with_columns(User.id, User.username).filter(User.username.like(f"%test%")).limit(10).avalues_list('username', flat=True)
+User.objects.with_columns(User.id, User.username).filter(
+    User.username.like(f"%test%")
+).limit(10).values_list("username", flat=True)
 
-# ... other operations
+await User.objects.with_columns(User.id, User.username).filter(
+    User.username.like(f"%test%")
+).limit(10).avalues_list("username", flat=True)
+
+# ... other operations# ... other operations
 ```
 
+**Native Query Approach in SQLAlchemy**
+```python
+from sqlalchemy import select
+
+from core.context import g
+from dao.base.database_fetch import database
+from models.user import User
+
+async def search():
+    # Query a list
+    query = (
+        select(User.id, User.nickname)
+        .where(User.nickname.like("%test%"))
+        .order_by(User.created_time.desc())
+    )
+    data = await database.a_fetchall(query, to_dict=False)
+    data = database.fetchall(query, to_dict=True)
+    
+    # Query a single record
+    data_first = await database.a_fetchone(query)
+    data_first = database.fetchone(query)
+    
+    # Query count
+    await database.a_fetch_count(query)
+    database.fetch_count(query)
+    
+    # Query scalar value
+    await database.ascalar(query)
+    database.scalar(query)
+    
+    # Alternatively, you can perform manual queries:
+    # Asynchronous
+    res = await g.session.execute(query)
+    res.scalars().all()
+    
+    # Synchronous
+    res = g.session_sync.execute(query).all()
+    g.session_sync.query(User).all()
+ 
+```
 
 ### Class-Based Views
 

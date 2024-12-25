@@ -181,48 +181,109 @@ class DemoView(BaseView):
 ```python
 from models.base import BaseModel
 
-
 class User(BaseModel):
-    __tablename__ = 'user'
+    __tablename__ = "user"
     username = Column(String(32))
-    # you column ...
+    # other columns ...
 
+# Query a single object
+User.objects.get(User.username == "")
+await User.objects.aget(User.username == "")
 
-User.objects.get(User.username=="")
-await User.objects.aget(User.username=="")
-
+# Create an object
 User.objects.create()
 await User.objects.a_create()
 
+# Update an object by ID
 User.objects.update_by_id()
 await User.objects.a_update_by_id()
 
+# Delete an object by ID
 User.objects.delete_by_id()
 await User.objects.a_delete_by_id()
 
-User.objects.filter(User.id >=10, username="test").order_by(User.id.desc()).values(User.username)
-await User.objects.filter(User.id >=10, username="test").order_by(User.id.desc()).avalues(User.username)
+# Query multiple records with filtering, ordering, and selecting specific values
+User.objects.filter(User.id >= 10, username="test").order_by(User.id.desc()).values(
+    User.username
+)
+await User.objects.filter(User.id >= 10, username="test").order_by(
+    User.id.desc()
+).avalues(User.username)
 
-User.objects.filter(User.id>10).update(username="test")
-await User.objects.filter(User.id>10).aupdate(username="test")
+# Update multiple records
+User.objects.filter(User.id > 10).update(username="test")
+await User.objects.filter(User.id > 10).aupdate(username="test")
 
-User.objects.filter(User.id>10).delete(username="test")
-await User.objects.filter(User.id>10).adelete(username="test")
+# Delete multiple records
+User.objects.filter(User.id > 10).delete(username="test")
+await User.objects.filter(User.id > 10).adelete(username="test")
 
+# Fetch the first record
 User.objects.filter(User.id >= 10).first()
 await User.objects.filter(User.id >= 10).afirst()
 
+# Fetch all records
 User.objects.filter(User.id >= 10).all()
 await User.objects.filter(User.id >= 10).a_all()
 
+# Get the last record
 User.objects.last()
 await User.objects.alast()
 
-User.objects.with_columns(User.id, User.username).filter(User.username.like(f"%test%")).limit(10).values_list('username', flat=True)
-await User.objects.with_columns(User.id, User.username).filter(User.username.like(f"%test%")).limit(10).avalues_list('username', flat=True)
+# Select specific columns with a limit and filtering
+User.objects.with_columns(User.id, User.username).filter(
+    User.username.like(f"%test%")
+).limit(10).values_list("username", flat=True)
 
+await User.objects.with_columns(User.id, User.username).filter(
+    User.username.like(f"%test%")
+).limit(10).avalues_list("username", flat=True)
+
+# ... other operations
 # ...等其他操作
 
+```
+
+
+**sqlalchemy原生查询方式**
+```python
+from sqlalchemy import select
+
+from core.context import g
+from dao.base.database_fetch import database
+from models.user import User
+
+async def search():
+    # Query a list
+    query = (
+        select(User.id, User.nickname)
+        .where(User.nickname.like("%test%"))
+        .order_by(User.created_time.desc())
+    )
+    data = await database.a_fetchall(query, to_dict=False)
+    data = database.fetchall(query, to_dict=True)
+    
+    # Query a single record
+    data_first = await database.a_fetchone(query)
+    data_first = database.fetchone(query)
+    
+    # Query count
+    await database.a_fetch_count(query)
+    database.fetch_count(query)
+    
+    # Query scalar value
+    await database.ascalar(query)
+    database.scalar(query)
+    
+    # Alternatively, you can perform manual queries:
+    # Asynchronous
+    res = await g.session.execute(query)
+    res.scalars().all()
+    
+    # Synchronous
+    res = g.session_sync.execute(query).all()
+    g.session_sync.query(User).all()
+ 
 ```
 
 
