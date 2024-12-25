@@ -7,7 +7,7 @@ Read this in [中文(Chinese)](README_CN.md)
 
 - Quickly set up the basic structure and dependencies of a FastAPI application via the command line.
 - Provide support for view classes (Django-style).
-- Imitate Django ORM style operations (simplified version, limited functionality, based on SQLAlchemy)
+- Imitate Django ORM style operations **(simplified version, limited functionality, based on SQLAlchemy)**
 - Implement authentication without dependency injection, similar to Django REST framework, with declarative `authentication_classes = []`.
 - Utilize a global asynchronous SQLAlchemy session object, e.g., `await g.session.get(Model, id)`.
 - Access Flask-like `g` variables, such as `g.request` and `g.user`.
@@ -155,9 +155,11 @@ class DemoView(BaseView):
 
 ### Django-like ORM Operations
 
+**Note⚠️：**  This is a simplified version and does not support complex operations like joining tables, foreign key relationships, or querying with underscores (e.g., field__contains).
+
 This project implements a simplified version of Django-like functionality using SQLAlchemy, providing both asynchronous and synchronous APIs for ease of use. It facilitates basic database operations like creating, querying, updating, and deleting records, along with more advanced features such as soft deletion, pagination, and aggregation.
 
-Note: This is a simplified version and does not support complex operations like joining tables, foreign key relationships, or querying with underscores (e.g., field__contains).
+
 
 **Core Features**
 
