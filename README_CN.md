@@ -6,7 +6,7 @@
 
 - 命令行快速设置 FastAPI 应用程序的基本结构和依赖项。
 - 提供视图类支持(仿django风格)
-- 仿Django ORM风格操作(简化版本,功能有限,基于sqlalchemy)
+- 仿Django ORM风格操作 **(简化版本,功能有限,基于sqlalchemy)**
 - 不依赖注入的身份验证，类似djangorestframework 声明式, authentication_classes = []
 - 全局的异步sqlalchemy session 对象，await g.session.get(Model, id)
 - 仿flask的g变量，g.request, g.user
@@ -154,9 +154,10 @@ class DemoView(BaseView):
 
 ### 仿Django ORM 操作
 
-本项目基于SQLAlchemy实现了类似Django的功能，提供了方便的异步和同步API。支持常见的数据库操作如创建、查询、更新、删除，以及更高级的功能比如软删除、分页和聚合。<br>
+**注意⚠️：  这是一个简化版本，不支持复杂操作如: 联表查询、外键关系或者使用下划线进行的查询（例如，`field__contains`）。** <br>
 
-**注意：**这是一个简化版本，不支持复杂操作如联表查询、外键关系或者使用下划线进行的查询（例如，`field__contains`）。<br>
+基于SQLAlchemy实现了类似Django的功能，提供了方便的异步和同步API。支持常见的数据库操作如创建、查询、更新、删除，以及更高级的功能比如软删除、分页和聚合。<br>
+
 
 **核心功能**
 
