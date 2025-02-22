@@ -32,7 +32,8 @@ class CustomModel(BaseModel):
     )
 
 
-def Res(data_model, validate: bool = True):
+def Res(data_model = None, validate: bool = True):
+    data_model = data_model or str | dict
     class ResponseModel(CustomModel):
         model_config = model_config
         code: int = 0

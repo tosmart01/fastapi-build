@@ -32,7 +32,7 @@ class BaseDao(ModelManager):
         :param where_clause: One or more filter conditions.
         :return: QuerySet with applied filters.
         """
-        return QuerySet(model_cls=self.model_cls).filter(*where_clause, *self.base_filter)
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter(*where_clause, )
 
     def all(self) -> list["Table"]:
         """
@@ -40,7 +40,7 @@ class BaseDao(ModelManager):
 
         :return: List of all rows in the table.
         """
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).all()
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().all()
 
     def first(self, to_dict: bool = False) -> Optional[Union["T", Any]]:
         """
@@ -49,7 +49,7 @@ class BaseDao(ModelManager):
         :param to_dict: Whether to return the result as a dictionary.
         :return: The first row or None if no rows match.
         """
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).first(to_dict)
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().first(to_dict)
 
     async def afirst(self, to_dict: bool = False) -> Optional[Union["T", Any]]:
         """
@@ -58,10 +58,10 @@ class BaseDao(ModelManager):
         :param to_dict: Whether to return the result as a dictionary.
         :return: The first row or None if no rows match.
         """
-        return await QuerySet(model_cls=self.model_cls).filter(*self.base_filter).afirst(to_dict)
+        return await QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().afirst(to_dict)
 
     def last(
-        self, field: Union[str, ColumnElement] = None, to_dict: bool = False
+            self, field: Union[str, ColumnElement] = None, to_dict: bool = False
     ) -> Optional[Union["T", Any]]:
         """
         Retrieve the last row of the query.
@@ -70,10 +70,10 @@ class BaseDao(ModelManager):
         :param to_dict: Whether to return the result as a dictionary.
         :return: The last row or None if no rows match.
         """
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).last(field, to_dict)
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().last(field, to_dict)
 
     async def alast(
-        self, field: Union[str, ColumnElement] = None, to_dict: bool = False
+            self, field: Union[str, ColumnElement] = None, to_dict: bool = False
     ) -> Optional[Union["T", Any]]:
         """
         Asynchronously retrieve the last row of the query.
@@ -82,7 +82,7 @@ class BaseDao(ModelManager):
         :param to_dict: Whether to return the result as a dictionary.
         :return: The last row or None if no rows match.
         """
-        return await QuerySet(model_cls=self.model_cls).filter(*self.base_filter).alast(field, to_dict)
+        return await QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().alast(field, to_dict)
 
     def values(self, *fields: Union[ColumnElement, str]) -> list[dict]:
         """
@@ -90,7 +90,7 @@ class BaseDao(ModelManager):
 
         :return: List of dictionaries representing rows.
         """
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).values(*fields)
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().values(*fields)
 
     async def avalues(self, *fields: Union[ColumnElement, str]) -> list[dict]:
         """
@@ -98,10 +98,10 @@ class BaseDao(ModelManager):
 
         :return: List of dictionaries representing rows.
         """
-        return await QuerySet(model_cls=self.model_cls).filter(*self.base_filter).avalues(*fields)
+        return await QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().avalues(*fields)
 
     def values_list(
-        self, *fields: Union[ColumnElement, str], flat: bool = False
+            self, *fields: Union[ColumnElement, str], flat: bool = False
     ) -> Union[list[list], list]:
         """
         Retrieve rows as lists based on selected fields.
@@ -109,10 +109,10 @@ class BaseDao(ModelManager):
         :param flat: If True, flatten the list structure.
         :return: List of lists or a flattened list.
         """
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).values_list(*fields, flat=flat)
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().values_list(*fields, flat=flat)
 
     async def avalues_list(
-        self, *fields: Union[ColumnElement, str], flat: bool = False
+            self, *fields: Union[ColumnElement, str], flat: bool = False
     ) -> Union[list[list], list]:
         """
         Asynchronously retrieve rows as lists based on selected fields.
@@ -120,7 +120,8 @@ class BaseDao(ModelManager):
         :param flat: If True, flatten the list structure.
         :return: List of lists or a flattened list.
         """
-        return await QuerySet(model_cls=self.model_cls).filter(*self.base_filter).avalues_list(*fields, flat=flat)
+        return await QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().avalues_list(*fields,
+                                                                                                         flat=flat)
 
     def count(self) -> int:
         """
@@ -128,7 +129,7 @@ class BaseDao(ModelManager):
 
         :return: The count of rows.
         """
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).count()
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().count()
 
     async def acount(self) -> int:
         """
@@ -136,7 +137,7 @@ class BaseDao(ModelManager):
 
         :return: The count of rows.
         """
-        return await QuerySet(model_cls=self.model_cls).filter(*self.base_filter).acount()
+        return await QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().acount()
 
     def exists(self) -> bool:
         """
@@ -144,7 +145,7 @@ class BaseDao(ModelManager):
 
         :return: True if rows exist, otherwise False.
         """
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).exists()
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().exists()
 
     async def aexists(self) -> bool:
         """
@@ -152,7 +153,7 @@ class BaseDao(ModelManager):
 
         :return: True if rows exist, otherwise False.
         """
-        return await QuerySet(model_cls=self.model_cls).filter(*self.base_filter).aexists()
+        return await QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().aexists()
 
     def exclude(self, *where_clause: BinaryExpression) -> QuerySet:
         """
@@ -161,7 +162,7 @@ class BaseDao(ModelManager):
         :param where_clause: Conditions to exclude from the query.
         :return: QuerySet with exclusions applied.
         """
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).exclude(*where_clause)
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().exclude(*where_clause)
 
     def order_by(self, *fields: Union[str, ColumnElement]) -> QuerySet:
         """
@@ -170,7 +171,7 @@ class BaseDao(ModelManager):
         :param fields: Fields to order by.
         :return: QuerySet with ordering applied.
         """
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).order_by(*fields)
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().order_by(*fields)
 
     def limit(self, n: int) -> QuerySet:
         """
@@ -179,7 +180,7 @@ class BaseDao(ModelManager):
         :param n: The maximum number of rows to return.
         :return: QuerySet with the limit applied.
         """
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).limit(n)
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().limit(n)
 
     def offset(self, n: int) -> QuerySet:
         """
@@ -188,7 +189,7 @@ class BaseDao(ModelManager):
         :param n: The number of rows to skip.
         :return: QuerySet with the offset applied.
         """
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).offset(n)
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().offset(n)
 
     def aggregate(self, *aggregates) -> dict:
         """
@@ -196,7 +197,7 @@ class BaseDao(ModelManager):
 
         :return: Dictionary with aggregate results.
         """
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).aggregate(*aggregates)
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().aggregate(*aggregates)
 
     async def a_aggregate(self, *aggregates) -> dict:
         """
@@ -204,53 +205,53 @@ class BaseDao(ModelManager):
 
         :return: Dictionary with aggregate results.
         """
-        return await QuerySet(model_cls=self.model_cls).filter(*self.base_filter).a_aggregate(*aggregates)
+        return await QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().a_aggregate(*aggregates)
 
     def pagination(
-        self, page: int = None, per_page: int = None
+            self, page: int = None, per_page: int = None
     ) -> tuple[int, list[dict]]:
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).pagination(page, per_page)
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().pagination(page, per_page)
 
     async def a_pagination(
-        self, page: int = None, per_page: int = None
+            self, page: int = None, per_page: int = None
     ) -> tuple[int, list[dict]]:
-        return await QuerySet(model_cls=self.model_cls).filter(*self.base_filter).a_pagination(page, per_page)
+        return await QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().a_pagination(page, per_page)
 
     def with_columns(self, *columns: Union[ColumnElement, str]) -> QuerySet:
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).with_columns(*columns)
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().with_columns(*columns)
 
     def get(
-        self,
-        *where_clauses: Union[ColumnElement, str],
-        to_dict: bool = False,
-        raise_not_found: bool = False,
-        **kw
+            self,
+            *where_clauses: Union[ColumnElement, str],
+            to_dict: bool = False,
+            raise_not_found: bool = False,
+            **kw
     ) -> T:
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).get(
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().get(
             *where_clauses, to_dict=to_dict, raise_not_found=raise_not_found, **kw
         )
 
     async def aget(
-        self,
-        *where_clauses: Union[ColumnElement, str],
-        to_dict: bool = False,
-        raise_not_found: bool = False,
-        **kw
+            self,
+            *where_clauses: Union[ColumnElement, str],
+            to_dict: bool = False,
+            raise_not_found: bool = False,
+            **kw
     ) -> T:
-        return await QuerySet(model_cls=self.model_cls).filter(*self.base_filter).aget(
+        return await QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().aget(
             *where_clauses, to_dict=to_dict, raise_not_found=raise_not_found, **kw
         )
 
     def get_by_id(
-        self, _id: Union[int, str], to_dict: bool = False, raise_not_found: bool = False
+            self, _id: Union[int, str], to_dict: bool = False, raise_not_found: bool = False
     ) -> Optional[T]:
-        return QuerySet(model_cls=self.model_cls).filter(*self.base_filter).get_by_id(
+        return QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().get_by_id(
             _id, to_dict=to_dict, raise_not_found=raise_not_found
         )
 
     async def aget_by_id(
-        self, _id: Union[int, str], to_dict: bool = False, raise_not_found: bool = False
+            self, _id: Union[int, str], to_dict: bool = False, raise_not_found: bool = False
     ) -> Optional[T]:
-        return await QuerySet(model_cls=self.model_cls).filter(*self.base_filter).aget_by_id(
+        return await QuerySet(model_cls=self.model_cls, filters=self._base_filter).filter().aget_by_id(
             _id, to_dict=to_dict, raise_not_found=raise_not_found
         )

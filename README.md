@@ -28,7 +28,7 @@ $ pip install fastapi-build --index-url=https://pypi.org/sample
 ```shell
 fbuild startproject --example-api --all-plugin demo && cd demo/src
 # Create example API tables
-fbuild makemigrations
+fbuild makemigrations -m "first"
 fbuild migrate
 ```
 

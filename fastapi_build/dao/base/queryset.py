@@ -239,15 +239,14 @@ class QuerySet:
 
     def order_by(self, *fields: Union[BinaryExpression, str]) -> Self:
         for field in fields:
-            if not field:
-                continue
             if isinstance(field, str):
-                if field.startswith("-"):
-                    column = self._get_model_field(field[1:])[0]
-                    self._order_by.append(column.desc())
-                else:
-                    column = self._get_model_field(field)[0]
-                    self._order_by.append(column)
+                if field.strip():
+                    if field.startswith("-"):
+                        column = self._get_model_field(field[1:])[0]
+                        self._order_by.append(column.desc())
+                    else:
+                        column = self._get_model_field(field)[0]
+                        self._order_by.append(column)
             else:
                 self._order_by.append(field)
         return self

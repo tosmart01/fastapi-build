@@ -34,6 +34,10 @@ class ModelManager(object):
     model_cls: Type[T] = None  # noqa
     base_filter = ()
 
+    @property
+    def _base_filter(self):
+        return list(self.base_filter)
+
     def get_query(self, query_field: Optional[Union[List, tuple]] = None):
         query = g.session_sync.query(self.model_cls).filter(*self.base_filter)
         if query_field:
@@ -84,7 +88,7 @@ class ModelManager(object):
             commit: bool = True,
             raise_not_found: bool = False
     ) -> int:
-        obj = QuerySet(model_cls=self.model_cls).get_by_id(model_id, raise_not_found=raise_not_found)
+        obj = QuerySet(model_cls=self.model_cls, filters=self._base_filter).get_by_id(model_id, raise_not_found=raise_not_found)
         new_obj = self.update_obj(obj, properties, commit=commit)
         return new_obj
 
@@ -125,7 +129,7 @@ class ModelManager(object):
             commit: bool = True,
             raise_not_found: bool = False
     ) -> int:
-        obj = QuerySet(model_cls=self.model_cls).get_by_id(model_id, raise_not_found=raise_not_found)
+        obj = QuerySet(model_cls=self.model_cls, filters=self._base_filter).get_by_id(model_id, raise_not_found=raise_not_found)
         return self.delete_obj(obj, commit=commit)
 
     def delete_by_ids(
@@ -166,7 +170,7 @@ class ModelManager(object):
         id_col = getattr(self.model_cls, "id", None)
         try:
             query = query.filter(id_col == model_id)
-            if not query and raise_not_found:
+            if not query.first() and raise_not_found:
                 raise NotFoundError()
             modify_count = query.update(
                 {delete_field: 1}
@@ -243,7 +247,7 @@ class ModelManager(object):
             properties: dict = None,
 
     ) -> int:
-        obj = await QuerySet(model_cls=self.model_cls).aget_by_id(model_id, raise_not_found=raise_not_found)
+        obj = await QuerySet(model_cls=self.model_cls, filters=self._base_filter).aget_by_id(model_id, raise_not_found=raise_not_found)
         return await self.a_update_obj(obj, commit=commit, properties=properties)
 
     async def a_update_by_ids(
@@ -291,7 +295,7 @@ class ModelManager(object):
             commit: bool = True,
             raise_not_found: bool = False
     ) -> int:
-        obj = await QuerySet(model_cls=self.model_cls).aget_by_id(model_id, raise_not_found=raise_not_found)
+        obj = await QuerySet(model_cls=self.model_cls, filters=self._base_filter).aget_by_id(model_id, raise_not_found=raise_not_found)
         return await self.a_delete_obj(obj, commit=commit)
 
     async def a_delete_by_ids(

@@ -3,11 +3,12 @@ gunicorn
 loguru
 pydantic
 PyJWT
-PyMySQL
 python-dotenv
 pytz
 SQLAlchemy
 typing_extensions
 uvicorn
 click
-
+alembic
+pyjwt
+passlib[bcrypt]

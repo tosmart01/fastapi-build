@@ -27,7 +27,7 @@ $ pip install fastapi-build --index-url=https://pypi.org/sample
 ```shell
 fbuild startproject --example-api --all-plugin demo && cd demo/src
 # 创建示例api表
-fbuild makemigrations
+fbuild makemigrations -m "first"
 fbuild migrate
 ```
 

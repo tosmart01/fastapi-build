@@ -1,7 +1,3 @@
-# -- coding: utf-8 --
-# @Time : 2024/5/24 14:42
-# @Author : PinBar
-# @File : demo.py
 from fastapi import Query, Body
 
 from .request_schema import UserCreateModel
@@ -26,18 +22,18 @@ class DemoView(BaseView):
         return self.response(data=user)
 
     async def get(
-        self,
-        page: int = Query(default=1, ge=1),
-        per_page: int = Query(default=10, ge=1),
-        search: str = Query(default=""),
-        sort: str = Query(default=""),
+            self,
+            page: int = Query(default=1, ge=1),
+            per_page: int = Query(default=10, ge=1),
+            search: str = Query(default="string"),
+            sort: str = Query(default="-create_time"),
     ) -> ListRes(UserItemResponse):
         total, data = (
-            await User.objects.filter(User.nickname == search)
+            await User.objects.filter(User.nickname.like(f"%{search}%"))
             .order_by(sort)
             .a_pagination(page, per_page)
         )
-        # total, data = User.objects.filter(User.nickname==search).order_by(sort).pagination(page, per_page)
+        # total, data = User.objects.filter(User.nickname.like(f"%{search}%")).order_by(sort).pagination(page, per_page)
         return self.response(data={"total": total, "items": data})
 
     @api_description(summary="create user", response_model=Res(UserItemResponse))
@@ -48,10 +44,10 @@ class DemoView(BaseView):
 
     @api_description(summary="update user")
     async def put(
-        self,
-        _id: int,
-        nickname: str = Body(..., embed=True),
-        email: str = Body(..., embed=True),
+            self,
+            _id: int,
+            nickname: str = Body(..., embed=True),
+            email: str = Body(..., embed=True),
     ):
         await User.objects.a_update_by_id(
             _id, properties={"nickname": nickname, "email": email}, raise_not_found=True
@@ -60,16 +56,16 @@ class DemoView(BaseView):
         return self.response()
 
     @api_description(summary="delete user")
-    def delete(
-        self,
-    ): ...
+    def delete(self, _id: int):
+        User.objects.soft_delete_by_id(_id, raise_not_found=True)
+        return self.response()
 
     @api_description(summary="multi put")
     def multi_put(
-        self,
+            self,
     ): ...
 
     @api_description(summary="multi delete")
     def multi_delete(
-        self,
+            self,
     ): ...

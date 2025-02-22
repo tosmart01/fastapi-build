@@ -3,7 +3,7 @@
 # @Author : PinBar
 # @File : base_view.py
 import inspect
-from typing import Union, Type
+from typing import Union, Type, Any
 
 from fastapi import APIRouter, Depends
 
@@ -20,11 +20,12 @@ class BaseView:
     permissions_classes = []
 
     def __init__(self, path: str = None, tags: list[str] = None, resource_id: str = '_id',
-                 query_post_suffix: str = '/list'):
+                 query_post_suffix: str = '/list', is_real_path: bool = False):
         self.tags = tags or [self.__class__.__name__]
         self.path = path
         self.resource_id = resource_id
         self.query_post_suffix = query_post_suffix
+        self.is_real_path = is_real_path
         self.register_routes()
 
     @property
@@ -62,7 +63,7 @@ class BaseView:
         return dependencies
 
     def register_routes(self):
-        resource_id = "/{" + self.resource_id + "}"
+        resource_id = "/{" + self.resource_id + "}" if not self.is_real_path else ""
         method_map = {
             "get": {'path': self.path, 'methods': ['GET'], },
             'detail': {'path': self.path + resource_id, 'methods': ['GET']},
@@ -92,11 +93,11 @@ class BaseView:
         return inspect.getmodule(subclass_method) != inspect.getmodule(base_method)
 
     @staticmethod
-    def response(code: int = 0, message: str = 'success', data: Union[dict, None, list, str] = None):
+    def response(code: int = 0, message: str = 'success', data: Union[dict, None, list, str, Any] = None):
         return {
             "code": code,
             "message": message,
-            "data": data
+            "data": data or {}
         }
 
     def get(self, *args, **kwargs):
@@ -125,9 +126,9 @@ class BaseView:
 
 
 def path(path: str = '/', view_cls: Type[BaseView] = None, tags: list[str] = None, resource_id: str = "_id",
-         query_post_suffix: str = '/list', methods: list[str] = None
+         query_post_suffix: str = '/list', methods: list[str] = None, is_real_path: bool = False,
          ):
     if inspect.isfunction(view_cls):
         return base_router.add_api_route(path, view_cls, methods=methods, tags=tags)
     elif inspect.isclass(view_cls):
-        return view_cls(path, tags, resource_id, query_post_suffix)
+        return view_cls(path, tags, resource_id, query_post_suffix, is_real_path)

@@ -2,9 +2,11 @@
 # @Time : 2024/5/27 11:22
 # @Author : PinBar
 # @File : base.py
+from datetime import datetime
+
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import DeclarativeMeta
-from sqlalchemy import Column, Boolean
+from sqlalchemy import Column, Boolean, DateTime
 
 from db.database import engine
 from dao import BaseDao
@@ -18,7 +20,8 @@ class CustomDeclarativeMeta(DeclarativeMeta):
             if hasattr(self, 'objects'):
                 self.objects = self.objects()
                 self.objects.model_cls = self
-                self.objects.base_filter = (self.objects.model_cls.is_delete == 0,)
+                if getattr(self.objects.model_cls, "is_delete", False):
+                    self.objects.base_filter = (self.objects.model_cls.is_delete == 0, )
 
 
 Base = declarative_base(metaclass=CustomDeclarativeMeta)
@@ -30,6 +33,8 @@ class BaseModel(Base):
     __abstract__ = True
     objects = BaseDao
     is_delete = Column(Boolean, nullable=False, default=False)
+    create_time = Column(DateTime(3), default=datetime.now)
+    update_time = Column(DateTime(3), default=datetime.now)
 
     def to_dict(self, keys=None):
         if keys:

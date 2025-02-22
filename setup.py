@@ -28,7 +28,7 @@ clean_pyc_and_cache()
 
 setup(
     name="fastapi_build",
-    version="1.0.0",
+    version="1.0.1",
     packages=find_packages(),
     url="https://github.com/tosmart01/fastapi-build",
     include_package_data=True,
@@ -36,7 +36,7 @@ setup(
     install_requires=parse_requirements('requirements.txt'),
     entry_points={
         "console_scripts": [
-            "fbuild=fastapi_build.scripts.cli:cli",  # 假设你的 server.py 文件中有一个 main 函数
+            "fbuild=fastapi_build.scripts.cli:cli",
         ],
     },
     package_data={
