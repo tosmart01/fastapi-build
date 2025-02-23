@@ -97,7 +97,7 @@ class BaseView:
         return {
             "code": code,
             "message": message,
-            "data": data or {}
+            "data": data
         }
 
     def get(self, *args, **kwargs):

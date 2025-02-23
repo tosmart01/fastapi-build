@@ -34,7 +34,7 @@ class BaseModel(Base):
     objects = BaseDao
     is_delete = Column(Boolean, nullable=False, default=False)
     create_time = Column(DateTime(3), default=datetime.now)
-    update_time = Column(DateTime(3), default=datetime.now)
+    update_time = Column(DateTime(3), default=datetime.now, onupdate=datetime.now)
 
     def to_dict(self, keys=None):
         if keys:

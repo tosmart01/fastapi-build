@@ -3,7 +3,7 @@
 # @Author : PinBar
 # @File : response.py
 from datetime import datetime
-from typing import Any, Annotated
+from typing import Any, Annotated, Union
 
 from pydantic import BaseModel, WrapValidator, ConfigDict
 from pydantic_core.core_schema import ValidatorFunctionWrapHandler, ValidationInfo
@@ -33,7 +33,7 @@ class CustomModel(BaseModel):
 
 
 def Res(data_model = None, validate: bool = True):
-    data_model = data_model or str | dict
+    data_model = data_model or Union[dict, None, list, str, Any]
     class ResponseModel(CustomModel):
         model_config = model_config
         code: int = 0
