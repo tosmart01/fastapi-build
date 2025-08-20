@@ -54,7 +54,7 @@ class BaseView:
             try:
                 from db.database import sessionmanager
             except ImportError:
-                pass
+                raise
             else:
                 if inspect.iscoroutinefunction(method):
                     dependencies.insert(0, Depends(sessionmanager.get_db))

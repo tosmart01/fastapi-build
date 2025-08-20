@@ -40,7 +40,9 @@ setup(
         ],
     },
     package_data={
-        "": ["*.md", "*.txt", "docker_build.sh", "Dockerfile", ".gitignores", "alembic.ini", 'script.py.mako'],  # 包含 README 和其他文件
+        "": ["*.md", "*.txt", "docker_build.sh", "Dockerfile", ".gitignores", "alembic.ini", 'script.py.mako',
+             "scripts/example_file"
+             ],
     },
     classifiers=[
         "Programming Language :: Python :: 3.9",

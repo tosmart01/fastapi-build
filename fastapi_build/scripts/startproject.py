@@ -25,10 +25,9 @@ def create_build_dir(project_name: str, package_dir: Path):
 
 
 @click.command(cls=StyledCommand,help=click.style('Create project folder', ))
-@click.option('--example-api', is_flag=True, help=click.style('Include an example API in the created project.'), default=False)
 @click.option('--all-plugin', is_flag=True, help=click.style('Include all plugins in the created project.'), default=False)
 @click.argument('project_name')
-def main(example_api: bool, all_plugin: bool, project_name: str):
+def main(all_plugin: bool, project_name: str):
     target_dir = Path.cwd() / project_name / 'src'
     try:
         target_dir.mkdir(parents=True, exist_ok=False)
@@ -56,23 +55,14 @@ def main(example_api: bool, all_plugin: bool, project_name: str):
             shutil.copy(row, target_dir)
 
     # 创建 api 目录结构
-    api_dir = target_dir / 'api'
-    api_dir.mkdir(parents=True, exist_ok=True)
-    (api_dir / '__init__.py').touch(exist_ok=True)
+    shutil.copytree(package_dir / "example_file" / "api", target_dir / "api")
+    (target_dir / "schema").mkdir(exist_ok=True)
+    (target_dir.parent / ".env").touch(exist_ok=True)
 
-    # 添加示例 API 和插件
-    if example_api:
-        click.echo(click.style('Adding example API...', fg='yellow'))
-        copy_tree(base_dir / 'api' / 'demo_user_api', api_dir / 'example_api')
-        if not all_plugin:
-            add_plugin("db[database]", target_dir, package_dir.parent)
-            shutil.copyfile(base_dir / 'models' / 'user.py', target_dir / 'models' / 'user.py')
 
     if all_plugin:
         click.echo(click.style('Adding all plugins...', fg='yellow'))
         add_plugin("all", target_dir, package_dir.parent)
-        if example_api:
-            shutil.copyfile(base_dir / 'models' / 'user.py', target_dir / 'models' / 'user.py')
 
     remove_header(target_dir)
     click.secho(

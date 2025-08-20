@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 
 import pytz
+import dotenv
+dotenv.load_dotenv()
 
 # BASE_DIR
 BASE_DIR = str(Path(__file__).parent.parent.resolve())
@@ -22,14 +24,15 @@ REDIS_CACHE_DB = os.getenv("REDIS_CACHE_DB", 0)
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "123456")
 
 # [database]
-DATABASE_ENGINE = os.getenv("DATABASE_ENGINE", "sqlite")
-ASYNC_DATABASE_ENGINE = os.getenv("ASYNC_DATABASE_ENGINE", "sqlite+aiosqlite")
+DATABASE_TYPE = os.getenv("DATABASE_TYPE", "sqlite")
 DATABASE_HOST = os.getenv("DATABASE_HOST", "localhost")
 DATABASE_PORT = int(os.getenv("DATABASE_PORT", 3306))
 DATABASE_USER = os.getenv("DATABASE_USER", "")
 DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD", "")
 DATABASE_NAME = os.getenv("DATABASE_NAME", 'database.db')
 DATABASE_CHARSET = os.getenv("DATABASE_CHARSET", "utf8mb4")
+DATABASE_SCHEMA = os.getenv("DATABASE_SCHEMA", "")
+DATABASE_ASYNC_ENABLED = int(os.getenv("DATABASE_ASYNC_ENABLED", 1))
 
 
 CREATE_DEPENDS_SESSION = int(os.getenv("CREATE_DEPENDS_SESSION", 1))
@@ -55,11 +58,4 @@ try:
         exec(f"from config.{ENV} import *")
 except ModuleNotFoundError as e:
     print(f"custom settings load fail:{e}")
-
-if DATABASE_ENGINE.startswith("sqlite"):
-    DB_URL = f"{DATABASE_ENGINE}:///{DATABASE_NAME}"
-    ASYNC_DB_URL =  f"{ASYNC_DATABASE_ENGINE}:///{DATABASE_NAME}"
-else:
-    DB_URL = f"{DATABASE_ENGINE}://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}?charset={DATABASE_CHARSET}"
-    ASYNC_DB_URL = f"{ASYNC_DATABASE_ENGINE}://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}?charset={DATABASE_CHARSET}"
 

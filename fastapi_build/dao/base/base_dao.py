@@ -1,7 +1,3 @@
-# -- coding: utf-8 --
-# @Time : 2024/5/27 11:38
-# @Author : PinBar
-# @File : base_dao.py
 
 from typing import TypeVar, Type, Optional, Union, Any, TYPE_CHECKING
 

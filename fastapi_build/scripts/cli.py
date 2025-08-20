@@ -3,10 +3,9 @@
 # @Author : PinBar
 # @File : cli.py
 import click
-from . import startproject, startapp, add_plugin, migrate
+from . import startproject, add_plugin, migrate
 from .. import __version__
 
-# 自定义帮助命令类以保持命令的注册顺序并支持样式
 import click
 
 
@@ -39,7 +38,6 @@ class OrderedGroup(click.Group):
                 formatter.write_dl(rows)
 
 
-# 使用自定义的 OrderedGroup
 @click.group(cls=OrderedGroup, context_settings=dict(help_option_names=['-h', '--help'], max_content_width=120))
 @click.version_option(version=__version__, prog_name=click.style('Fastapi-Build', fg='blue', bold=True))
 def cli():
@@ -48,7 +46,6 @@ def cli():
 
 
 cli.add_command(startproject.main, name="startproject")
-cli.add_command(startapp.main, name="startapp")
 cli.add_command(add_plugin.main, name="add_plugin")
 cli.add_command(migrate.makemigrations, name="makemigrations")
 cli.add_command(migrate.showmigrations, name="showmigrations")

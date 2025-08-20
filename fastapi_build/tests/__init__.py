@@ -8,12 +8,10 @@ Time: 2024/12/6
 """
 import asyncio
 
-from db.database import session_maker_sync, session_maker
+from db.database import load_session
 from core.context import g
 
-session = session_maker_sync()
-g.session_sync = session
-g.session = session_maker()
+load_session()
 from models.user import User
 
 async def main():

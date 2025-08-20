@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # 将BASE_DIR 假如搜索路径
 sys.path.insert(0, str(BASE_DIR / 'api'))
 sys.path.insert(0, str(BASE_DIR))
-from config.settings import DB_URL
+from db.db_url import build_db_urls
 from common.load_model import import_api_module
 
 from logging.config import fileConfig
@@ -19,7 +19,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-
+DB_URL, _ = build_db_urls()
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

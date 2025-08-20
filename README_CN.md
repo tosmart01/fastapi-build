@@ -26,9 +26,6 @@ $ pip install fastapi-build --index-url=https://pypi.org/sample
 - 命令行创建项目
 ```shell
 fbuild startproject --example-api --all-plugin demo && cd demo/src
-# 创建示例api表
-fbuild makemigrations -m "first"
-fbuild migrate
 ```
 
 - 运行项目
@@ -38,13 +35,12 @@ python server.py
 
 - 样例路由
 ```python
-# api/demo_user_api/urls.py
-from . import APP_NAME
+# api/urls.py
 from .view import DemoView
 from core.base_view import path
 
 urlpatterns = [
-    path('/user', DemoView, tags=[APP_NAME]),
+    path('/user', DemoView, tags=[""]),
 ]
 
 ```
@@ -467,7 +463,6 @@ Options:
 
 Commands:
   startproject    Create project folder
-  startapp        To create the app, you need to navigate to the...
   add_plugin      Register a plugin for the application.
   makemigrations  Run the alembic revision, like Django python manage.py makemigrations
   showmigrations  Run the alembic history, like Django python manage.py showmigrations

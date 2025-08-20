@@ -8,7 +8,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import DeclarativeMeta
 from sqlalchemy import Column, Boolean, DateTime
 
-from db.database import engine
 from dao import BaseDao
 
 
@@ -21,7 +20,7 @@ class CustomDeclarativeMeta(DeclarativeMeta):
                 self.objects = self.objects()
                 self.objects.model_cls = self
                 if getattr(self.objects.model_cls, "is_delete", False):
-                    self.objects.base_filter = (self.objects.model_cls.is_delete == 0, )
+                    self.objects.base_filter = (self.objects.model_cls.is_delete == 0,)
 
 
 Base = declarative_base(metaclass=CustomDeclarativeMeta)
@@ -41,7 +40,3 @@ class BaseModel(Base):
             return {c: getattr(self, c, None) for c in keys}
         else:
             return {c.name: getattr(self, c.name, None) for c in self.__table__.columns}
-
-
-def create_tables():
-    Base.metadata.create_all(engine)

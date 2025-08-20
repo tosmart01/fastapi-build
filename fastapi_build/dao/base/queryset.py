@@ -289,17 +289,13 @@ class QuerySet:
         total, data = await database.a_pagination(self.query, page, per_page)
         return total, data
 
-    async def aupdate(self, args: Dict[Union[ColumnElement, str], Any], **properties) -> int:
-        if args:
-            properties.update(args)
-        stmt = update(self.model_cls).where(*self._filters).values(properties).execution_options(
+    async def aupdate(self, **properties) -> int:
+        stmt = update(self.model_cls).where(*self._filters).values(**properties).execution_options(
             synchronize_session="fetch")
         return await database.aexecute_update(stmt)
 
-    def update(self, args: Dict[Union[ColumnElement, str], Any], **properties) -> int:
-        if args:
-            properties.update(args)
-        stmt = update(self.model_cls).where(*self._filters).values(properties).execution_options(
+    def update(self,  **properties) -> int:
+        stmt = update(self.model_cls).where(*self._filters).values(**properties).execution_options(
             synchronize_session="fetch")
         return database.execute_update(stmt)
 
@@ -312,10 +308,10 @@ class QuerySet:
         return await database.aexecute_update(stmt)
 
     def soft_delete(self) -> int:
-        return self.update({self.model_cls.is_delete: True})
+        return self.update(**{self.model_cls.is_delete: True})
 
     async def asoft_delete(self) -> int:
-        return await self.aupdate({self.model_cls.is_delete: True})
+        return await self.aupdate(**{self.model_cls.is_delete: True})
 
     def as_sql(self):
         return self._build_query()

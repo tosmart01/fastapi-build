@@ -7,6 +7,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, constr, field_validator
 
 from exceptions.custom_exception import ParamsError
+from core.response import CustomModel
 
 
 class UserCreateModel(BaseModel):
@@ -32,3 +33,12 @@ class UserLoginResponseModel(BaseModel):
     username: str
     email: str
     token: str
+
+
+class UserItemResponse(CustomModel):
+    id: int
+    username: str
+    nickname: str
+    email: Optional[str]
+    creator_id: Optional[int]
+    created_time: Union[datetime, None]

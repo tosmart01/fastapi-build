@@ -26,10 +26,7 @@ $ pip install fastapi-build --index-url=https://pypi.org/sample
 ### Create a Project with Example APIs
 - Create a project via the command line:
 ```shell
-fbuild startproject --example-api --all-plugin demo && cd demo/src
-# Create example API tables
-fbuild makemigrations -m "first"
-fbuild migrate
+fbuild startproject --all-plugin demo && cd demo/src
 ```
 
 - Run the project
@@ -39,13 +36,12 @@ python server.py
 
 - Example Route
 ```python
-# api/demo_user_api/urls.py
-from . import APP_NAME
+# api/urls.py
 from .view import DemoView
 from core.base_view import path
 
 urlpatterns = [
-    path('/user', DemoView, tags=[APP_NAME]),
+    path('/user', DemoView, tags=["demo"]),
 ]
 
 ```
@@ -466,7 +462,6 @@ Options:
 
 Commands:
   startproject    Create project folder
-  startapp        To create the app, you need to navigate to the...
   add_plugin      Register a plugin for the application.
   makemigrations  Run the alembic revision, like Django python manage.py makemigrations
   showmigrations  Run the alembic history, like Django python manage.py showmigrations
