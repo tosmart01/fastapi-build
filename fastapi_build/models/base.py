@@ -10,6 +10,8 @@ from sqlalchemy import Column, Boolean, DateTime
 
 from dao import BaseDao
 
+from config.settings import DATABASE_SCHEMA
+
 
 class CustomDeclarativeMeta(DeclarativeMeta):
 
@@ -24,6 +26,8 @@ class CustomDeclarativeMeta(DeclarativeMeta):
 
 
 Base = declarative_base(metaclass=CustomDeclarativeMeta)
+if DATABASE_SCHEMA:
+    Base.metadata.schema = DATABASE_SCHEMA
 
 
 class BaseModel(Base):

@@ -1,8 +1,29 @@
+import asyncio
 from typing import Tuple
 from urllib.parse import quote_plus
 
 from config.settings import DATABASE_HOST, DATABASE_CHARSET, DATABASE_NAME, DATABASE_PASSWORD, DATABASE_PORT, \
     DATABASE_USER, DATABASE_SCHEMA, DATABASE_TYPE
+
+
+def get_postgres_single_url(sync_engine, async_engine, user, password, host, port, name, schema, charset):
+    params = []
+    if charset:
+        if charset == "utf8mb4":
+            charset = "utf8"
+        params.append(f"client_encoding={charset}")
+    if schema:
+        # options 参数用于指定 search_path
+        params.append(f"options=-csearch_path={schema}")
+    param_str = f"?{'&'.join(params)}" if params else ""
+
+    db_url = (
+        f"{sync_engine}://{quote_plus(user)}:{quote_plus(password)}@{host}:{port}/{name}{param_str}"
+    )
+    async_db_url = (
+        f"{async_engine}://{quote_plus(user)}:{quote_plus(password)}@{host}:{port}/{name}"
+    )
+    return db_url, async_db_url
 
 
 def build_db_urls(
@@ -11,7 +32,7 @@ def build_db_urls(
         user: str = DATABASE_USER,
         password: str = DATABASE_PASSWORD,
         host: str = DATABASE_HOST,
-        port: str = DATABASE_PORT,
+        port: int = DATABASE_PORT,
         charset: str = DATABASE_CHARSET,
         schema: str = DATABASE_SCHEMA,
 ) -> Tuple[str, str]:
@@ -36,6 +57,11 @@ def build_db_urls(
             "sync": "mariadb+pymysql",
             "async": "mariadb+aiomysql",
             "default_port": 3306
+        },
+        "gaussdb": {
+            "sync": "opengauss+dc_psycopg2",
+            "async": "postgresql+asyncpg",
+            "default_port": 5432
         }
     }
 
@@ -68,21 +94,18 @@ def build_db_urls(
 
     # PostgreSQL
     if db_type_lower == "postgres":
-        params = []
-        if charset:
-            params.append(f"client_encoding={charset}")
-        if schema:
-            # options 参数用于指定 search_path
-            params.append(f"options=-csearch_path={schema}")
-        param_str = f"?{'&'.join(params)}" if params else ""
-
-        db_url = (
-            f"{sync_engine}://{quote_plus(user)}:{quote_plus(password)}@{host}:{port}/{name}{param_str}"
-        )
-        async_db_url = (
-            f"{async_engine}://{quote_plus(user)}:{quote_plus(password)}@{host}:{port}/{name}{param_str}"
-        )
-        return db_url, async_db_url
+        return get_postgres_single_url(sync_engine, async_engine, user, password, host, port, name, schema, charset)
+    if db_type_lower == "gaussdb":
+        if "," in DATABASE_HOST:
+            hosts = "&".join(["host=" + i for i in DATABASE_HOST.split(',')])
+            # 添加 schema 参数（不需要手动 URL 编码）
+            if DATABASE_SCHEMA:
+                url = f"://{user}:{password}@/{name}?{hosts}&options=-csearch_path={schema}"
+            else:
+                url = f"://{user}:{password}@/{name}?{hosts}"
+            return f"{sync_engine}{url}", f"{async_engine}{url}"
+        else:
+            return get_postgres_single_url(sync_engine, async_engine, user, password, host, port, name, schema, charset)
 
     # 兜底（不推荐）
     db_url = f"{sync_engine}://{quote_plus(user)}:{quote_plus(password)}@{host}:{port}/{name}"

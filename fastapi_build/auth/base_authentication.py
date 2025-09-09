@@ -30,9 +30,6 @@ async def aget_current_user(user_id) -> AnonymousUser:
 
 class BaseAuthentication:
 
-    def __init__(self, name):
-        self.name = name
-
     def set_context(self, request: Request, user):
         g.user = user
         g.user_id = user.id
@@ -81,4 +78,3 @@ class BaseTokenAuthentication(BaseAuthentication):
 
     def authenticate_sync(self, request: Request):
         return AnonymousUser()
-

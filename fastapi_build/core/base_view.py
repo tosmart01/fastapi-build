@@ -47,7 +47,7 @@ class BaseView:
                                   else self.authentication_classes)
         permission_classes = (custom_permission_classes if custom_permission_classes is not None else
                               self.permissions_classes)
-        dependencies = [Depends(_(name='')(method)) for _ in authentication_classes] + \
+        dependencies = [Depends(_()(method)) for _ in authentication_classes] + \
                        [Depends(_(method)) for _ in permission_classes]
         depend_session: bool = extra_params.pop("depend_session", CREATE_DEPENDS_SESSION)
         if depend_session:

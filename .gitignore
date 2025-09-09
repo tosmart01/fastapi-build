@@ -112,3 +112,6 @@ celerybeat-schedule.db
 *.pyc
 .DS_Store
 *.db
+uv.lock
+
+
